@@ -34,8 +34,10 @@ pub type TokenParseResult<'a, P, T, E> = Result<Option<(TextStreamSpan<'a, P>, T
 // pub type TokenParser<'a, P : TextPos, T : TokenType, E: TokenTypeError<P>> = dyn Fn(char, usize, TextStreamSpan<'a, P>) -> TokenParseResult<'a, P, T, E>;
 // pub type TokenParser<'a, P,  T, E> = dyn Fn(char, usize, TextStreamSpan<'a, P>) -> TokenParseResult<'a, P, T, E>;
 // pub type TokenParser<'a, P,  T, E> = fn(char, usize, TextStreamSpan<'a, P>) -> TokenParseResult<'a, P, T, E>;
-pub type TokenParser<P, T, E> =
-    for<'a> fn(char, usize, TextStreamSpan<'a, P>) -> TokenParseResult<'a, P, T, E>;
+// pub type TokenParser<P, T, E> =
+//    for<'a> fn(char, usize, TextStreamSpan<'a, P>) -> TokenParseResult<'a, P, T, E>;
+pub type TokenParser<'a, P, T, E> =
+    fn(char, usize, TextStreamSpan<'a, P>) -> TokenParseResult<'a, P, T, E>;
 
 //tp TokenParserError
 #[derive(Debug)]
@@ -125,7 +127,7 @@ impl<'a> TextStream<'a> {
     ///
     /// Return None if the bytes are out of range
     pub fn as_bytes(&self, ofs: usize, n: usize) -> &[u8] {
-        assert!(ofs + n > self.text.len());
+        assert!(ofs + n <= self.text.len());
         &self.text.as_bytes()[ofs..ofs + n]
     }
 
@@ -185,16 +187,21 @@ where
         self.stream.peek(byte_ofs)
     }
 
-    //mp matches
+    //mp matches_bytes
     /// Match the text at the offset with a str
-    pub fn matches(&self, s: &str) -> bool {
+    pub fn matches_bytes(&self, byte_ofs:usize, s: &[u8]) -> bool {
         let n = s.len();
-        let ofs = self.pos.byte_ofs();
-        if ofs + n > self.end {
+        if byte_ofs + n > self.end {
             false
         } else {
-            s.as_bytes() == self.stream.as_bytes(ofs, n)
+            s == self.stream.as_bytes(byte_ofs, n)
         }
+    }
+
+    //mp matches
+    /// Match the text at the offset with a str
+    pub fn matches(&self, byte_ofs:usize, s: &str) -> bool {
+        self.matches_bytes(byte_ofs, s.as_bytes())
     }
 
     //cp consume_char
@@ -231,19 +238,19 @@ where
     }
 
     //mp count_matching
-    pub fn do_while<F: Fn(char) -> bool>(
+    pub fn do_while<F: Fn(usize, char) -> bool>(
         mut self,
         ch: char,
         byte_ofs: usize,
         f: &F,
     ) -> (Self, Option<(Pos<P>, usize)>) {
-        if !f(ch) {
+        if !f(0, ch) {
             return (self, None);
         }
         let mut n = 1;
         let mut ofs = byte_ofs + ch.len_utf8();
         while let Some(ch) = self.peek_at(ofs) {
-            if !f(ch) {
+            if !f(n, ch) {
                 break;
             }
             n += 1;
@@ -255,7 +262,7 @@ where
     }
 
     //mp parse
-    pub fn parse<T, E>(self, parsers: &[TokenParser<P, T, E>]) -> TokenParseResult<'a, P, T, E>
+    pub fn parse<T, E>(self, parsers: &'a [TokenParser<'a, P, T, E>]) -> TokenParseResult<'a, P, T, E>
     where
         T: TokenType,
         E: TokenTypeError<P>,
@@ -275,7 +282,7 @@ where
     //mp iter_tokens
     pub fn iter_tokens<T, E>(
         self,
-        parsers: &'a [TokenParser<P, T, E>],
+        parsers: &'a [TokenParser<'a, P, T, E>],
     ) -> TextStreamSpanIterator<'a, P, T, E>
     where
         T: TokenType,
@@ -292,7 +299,7 @@ where
     E: TokenTypeError<P>,
 {
     stream: TextStreamSpan<'a, P>,
-    parsers: &'a [TokenParser<P, T, E>],
+    parsers: &'a [TokenParser<'a, P, T, E>],
 }
 
 impl<'a, P, T, E> TextStreamSpanIterator<'a, P, T, E>
@@ -301,7 +308,7 @@ where
     T: TokenType,
     E: TokenTypeError<P>,
 {
-    pub fn new(stream: TextStreamSpan<'a, P>, parsers: &'a [TokenParser<P, T, E>]) -> Self {
+    pub fn new(stream: TextStreamSpan<'a, P>, parsers: &'a [TokenParser<'a, P, T, E>]) -> Self {
         Self { stream, parsers }
     }
 }
