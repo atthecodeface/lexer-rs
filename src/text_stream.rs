@@ -1,18 +1,19 @@
-//a Documentation
 //a Imports
-use crate::{Pos, TextPos};
+use std::ops::Range;
+
+use crate::{Pos, Span, TextPos};
 
 //a External traits
 //tt TokenType
 /// The trait required of a token
-pub trait TokenType : Sized + std::fmt::Debug + Copy {}
+pub trait TokenType: Sized + std::fmt::Debug + Copy {}
 
 //tt TokenTypeError
 /// A trait required of an error - a char that does not match any
 /// token parser rust return an error, and this trait requires that
 /// such an error be provided
-pub trait TokenTypeError<P : TextPos> : Sized + std::error::Error {
-    fn failed_to_parse(ch:char, stream:TextStreamSpan<P>) -> Self;
+pub trait TokenTypeError<P: TextPos>: Sized + std::error::Error {
+    fn failed_to_parse(ch: char, stream: TextStreamSpan<P>) -> Self;
 }
 
 //tp TokenParseResult
@@ -33,27 +34,34 @@ pub type TokenParseResult<'a, P, T, E> = Result<Option<(TextStreamSpan<'a, P>, T
 // pub type TokenParser<'a, P : TextPos, T : TokenType, E: TokenTypeError<P>> = dyn Fn(char, usize, TextStreamSpan<'a, P>) -> TokenParseResult<'a, P, T, E>;
 // pub type TokenParser<'a, P,  T, E> = dyn Fn(char, usize, TextStreamSpan<'a, P>) -> TokenParseResult<'a, P, T, E>;
 // pub type TokenParser<'a, P,  T, E> = fn(char, usize, TextStreamSpan<'a, P>) -> TokenParseResult<'a, P, T, E>;
-pub type TokenParser<P,  T, E> = for <'a> fn(char, usize, TextStreamSpan<'a, P>) -> TokenParseResult<'a, P, T, E>;
+pub type TokenParser<P, T, E> =
+    for<'a> fn(char, usize, TextStreamSpan<'a, P>) -> TokenParseResult<'a, P, T, E>;
 
 //tp TokenParserError
 #[derive(Debug)]
 pub struct TokenParseError<P>
-where P : TextPos {
-    s : String,
-    pos : Pos<P>,
+where
+    P: TextPos,
+{
+    s: String,
+    pos: Pos<P>,
 }
 
-impl <P : TextPos> std::error::Error for TokenParseError<P> {}
-impl <P> TokenTypeError<P> for TokenParseError<P>
-where P : TextPos {
-    fn failed_to_parse(ch:char, stream:TextStreamSpan<P>) -> Self {
+impl<P: TextPos> std::error::Error for TokenParseError<P> {}
+impl<P> TokenTypeError<P> for TokenParseError<P>
+where
+    P: TextPos,
+{
+    fn failed_to_parse(ch: char, stream: TextStreamSpan<P>) -> Self {
         let s = format!("Failed to parse: unexpected char '{}'", ch);
         let pos = stream.pos();
         Self { s, pos }
     }
 }
-impl <P> std::fmt::Display for TokenParseError<P> 
-where P : TextPos {
+impl<P> std::fmt::Display for TokenParseError<P>
+where
+    P: TextPos,
+{
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(fmt, "{} at {}", self.s, self.pos)
     }
@@ -65,43 +73,50 @@ where P : TextPos {
 /// matching
 #[derive(Debug)]
 pub struct TextStream<'a> {
-    text : &'a str,
+    text: &'a str,
 }
 
 //ip TextStream
-impl <'a> TextStream<'a> {
+impl<'a> TextStream<'a> {
     //fp new
     /// Create a new [TextStream] by borrowing a [str]
-    pub fn new(text:&'a str) -> Self {
+    pub fn new(text: &'a str) -> Self {
         Self { text }
     }
 
     //mp as_span
     /// Borrow the full [TextStreamSpan] of the [TextStream]
-    pub fn as_span<'b, P:TextPos>(&'b self) -> TextStreamSpan<'b, P> {
+    pub fn as_span<P: TextPos>(&self) -> TextStreamSpan<P> {
         TextStreamSpan::new(self)
+    }
+
+    //mp get_text_span
+    /// Get the text of a [Span] provided by the parsers
+    ///
+    /// Safety : The Span has been provided by a parser and so the
+    /// byte offsets are indeed utf8 character boundaries
+    pub fn get_text_span<P: TextPos>(&self, span: Span<P>) -> &str {
+        unsafe { self.get_text(span.byte_range()) }
     }
 
     //mp get_text
     /// Get the text between a start and end byte offset
     ///
     /// Safety : The byte offsets must correspond to utf8 character points
-    unsafe fn get_text<'b> (&'b self, start:usize, end:usize) -> &'b str {
-        self.text.get_unchecked(start .. end)
+    unsafe fn get_text(&self, range: Range<usize>) -> &str {
+        self.text.get_unchecked(range)
     }
 
     //mp peek
     /// Get the utf8 chararacter at the byte offset, or None at the end of a string
-    fn peek(&self, byte_ofs:usize) -> Option<char> {
+    fn peek(&self, byte_ofs: usize) -> Option<char> {
         if byte_ofs >= self.text.len() {
             None
         } else {
             // Safety : byte_ofs is maintained as a utf8 character
             // point boundary within or at the end of the str
-            let text = unsafe {
-                self.text.get_unchecked(byte_ofs .. self.text.len())
-            };
-            text.chars().nth(0)
+            let text = unsafe { self.text.get_unchecked(byte_ofs..self.text.len()) };
+            text.chars().next()
         }
     }
 
@@ -109,9 +124,9 @@ impl <'a> TextStream<'a> {
     /// Borrow some bytes of the stream from an offset
     ///
     /// Return None if the bytes are out of range
-    pub fn as_bytes(&self, ofs:usize, n:usize) -> &[u8] {
+    pub fn as_bytes(&self, ofs: usize, n: usize) -> &[u8] {
         assert!(ofs + n > self.text.len());
-        &self.text.as_bytes()[ofs .. ofs+n]
+        &self.text.as_bytes()[ofs..ofs + n]
     }
 
     //zz All done
@@ -119,28 +134,36 @@ impl <'a> TextStream<'a> {
 
 //tp TextStreamSpan
 #[derive(Debug, Copy, Clone)]
-pub struct TextStreamSpan<'a, P> 
-    where P: TextPos {
-    stream : &'a TextStream<'a>,
-    end : usize,
-    pos : Pos<P>,
+pub struct TextStreamSpan<'a, P>
+where
+    P: TextPos,
+{
+    stream: &'a TextStream<'a>,
+    end: usize,
+    pos: Pos<P>,
 }
 
 //ip TextStreamSpan
-impl <'a, P> TextStreamSpan<'a, P>
-    where P: TextPos {
+impl<'a, P> TextStreamSpan<'a, P>
+where
+    P: TextPos,
+{
     //fp new
     /// Create a new [TextStreamSpan] of the whole of a [TextStream]
-    fn new(stream :&'a TextStream<'a>) -> Self {
-        Self { stream, end:stream.text.len(), pos:Pos::default() }
+    fn new(stream: &'a TextStream<'a>) -> Self {
+        Self {
+            stream,
+            end: stream.text.len(),
+            pos: Pos::default(),
+        }
     }
-    
+
     //mp get_text
     /// Get the text corresponding to this span
-    fn get_text<'b> (&'b self) -> &'b str {
+    pub fn get_text(&self) -> &str {
         // Safety : byte_ofs is maintained as a utf8 character
         // point boundary within or at the end of the str
-        unsafe { self.stream.get_text(self.pos.byte_ofs(), self.end) }
+        unsafe { self.stream.get_text(self.pos.byte_ofs()..self.end) }
     }
 
     //mp pos
@@ -158,13 +181,13 @@ impl <'a, P> TextStreamSpan<'a, P>
     //mp peek_at
     /// Peek at the a byte offset ahead
     #[inline]
-    pub fn peek_at(&self, byte_ofs:usize) -> Option<char> {
+    pub fn peek_at(&self, byte_ofs: usize) -> Option<char> {
         self.stream.peek(byte_ofs)
     }
 
     //mp matches
     /// Match the text at the offset with a str
-    pub fn matches(&self, s:&str) -> bool {
+    pub fn matches(&self, s: &str) -> bool {
         let n = s.len();
         let ofs = self.pos.byte_ofs();
         if ofs + n > self.end {
@@ -176,45 +199,73 @@ impl <'a, P> TextStreamSpan<'a, P>
 
     //cp consume_char
     /// Become the span after consuming a particular char
-    pub fn consume_char(mut self, byte_ofs:usize, ch:char) -> Self {
+    pub fn consume_char(mut self, byte_ofs: usize, ch: char) -> Self {
         if ch == '\n' {
-            self.pos = self.pos.advance_line(byte_ofs+1);
+            self.pos = self.pos.advance_line(byte_ofs + 1);
         } else {
-            self.pos = self.pos.advance_cols( byte_ofs + ch.len_utf8(), 1 );
+            self.pos = self.pos.advance_cols(byte_ofs + ch.len_utf8(), 1);
         }
         self
     }
 
     //cp consume_ascii_str
     /// Become the span after consuming a particular ascii string without newlines
-    pub fn consume_ascii_str(mut self, byte_ofs:usize, s: &str) -> Self {
+    pub fn consume_ascii_str(mut self, byte_ofs: usize, s: &str) -> Self {
         let n = s.len();
-        self.pos = self.pos.advance_cols( byte_ofs + n, n );
+        self.pos = self.pos.advance_cols(byte_ofs + n, n);
         self
     }
 
     //cp consumed_chars
     /// Become the span after consuming a particular string of known character length
-    pub fn consumed_chars(mut self, end_ofs:usize, num_chars:usize) -> Self {
-        self.pos = self.pos.advance_cols( end_ofs, num_chars );
+    pub fn consumed_chars(mut self, end_ofs: usize, num_chars: usize) -> Self {
+        self.pos = self.pos.advance_cols(end_ofs, num_chars);
         self
     }
 
     //cp consumed_newline
     /// Become the stream span after a newline
-    pub fn consumed_newline(mut self, end_ofs:usize) -> Self {
+    pub fn consumed_newline(mut self, end_ofs: usize) -> Self {
         self.pos = self.pos.advance_line(end_ofs);
         self
     }
 
+    //mp count_matching
+    pub fn do_while<F: Fn(char) -> bool>(
+        mut self,
+        ch: char,
+        byte_ofs: usize,
+        f: &F,
+    ) -> (Self, Option<(Pos<P>, usize)>) {
+        if !f(ch) {
+            return (self, None);
+        }
+        let mut n = 1;
+        let mut ofs = byte_ofs + ch.len_utf8();
+        while let Some(ch) = self.peek_at(ofs) {
+            if !f(ch) {
+                break;
+            }
+            n += 1;
+            ofs += ch.len_utf8();
+        }
+        let pos = self.pos();
+        self = self.consumed_chars(ofs, n);
+        (self, Some((pos, n)))
+    }
+
     //mp parse
-    pub fn parse<T, E>(self, parsers:&[ TokenParser<P, T, E> ]) -> TokenParseResult<'a, P, T, E>
-    where T : TokenType,
-          E: TokenTypeError<P> {
+    pub fn parse<T, E>(self, parsers: &[TokenParser<P, T, E>]) -> TokenParseResult<'a, P, T, E>
+    where
+        T: TokenType,
+        E: TokenTypeError<P>,
+    {
         if let Some(ch) = self.peek() {
             for p in parsers {
                 let result = p(ch, self.pos.byte_ofs(), self)?;
-                if result.is_some() { return Ok(result); }
+                if result.is_some() {
+                    return Ok(result);
+                }
             }
             return Err(E::failed_to_parse(ch, self));
         }
@@ -222,41 +273,50 @@ impl <'a, P> TextStreamSpan<'a, P>
     }
 
     //mp iter_tokens
-    pub fn iter_tokens<T, E>(self, parsers:&'a [ TokenParser<P, T, E> ]) -> TextStreamSpanIterator<'a, P, T, E>
-    where T : TokenType,
-          E: TokenTypeError<P> {
-        
+    pub fn iter_tokens<T, E>(
+        self,
+        parsers: &'a [TokenParser<P, T, E>],
+    ) -> TextStreamSpanIterator<'a, P, T, E>
+    where
+        T: TokenType,
+        E: TokenTypeError<P>,
+    {
         TextStreamSpanIterator::new(self, parsers)
     }
 }
 
-pub struct TextStreamSpanIterator<'a, P, T, E> 
-    where P: TextPos,
-    T : TokenType,
-          E: TokenTypeError<P> {
-    stream : TextStreamSpan<'a, P>,
-    parsers : &'a [ TokenParser<P, T, E> ],
+pub struct TextStreamSpanIterator<'a, P, T, E>
+where
+    P: TextPos,
+    T: TokenType,
+    E: TokenTypeError<P>,
+{
+    stream: TextStreamSpan<'a, P>,
+    parsers: &'a [TokenParser<P, T, E>],
 }
 
-impl <'a, P, T, E> TextStreamSpanIterator<'a, P, T, E>
-    where P: TextPos,
-    T : TokenType,
-          E: TokenTypeError<P> {
-        pub fn new(    stream : TextStreamSpan<'a, P>,
-                       parsers : &'a [ TokenParser<P, T, E> ]) -> Self {
-            Self {stream, parsers}
-        }
+impl<'a, P, T, E> TextStreamSpanIterator<'a, P, T, E>
+where
+    P: TextPos,
+    T: TokenType,
+    E: TokenTypeError<P>,
+{
+    pub fn new(stream: TextStreamSpan<'a, P>, parsers: &'a [TokenParser<P, T, E>]) -> Self {
+        Self { stream, parsers }
+    }
 }
-    
-impl <'a, P, T, E> Iterator for TextStreamSpanIterator<'a, P, T, E>
-    where P: TextPos,
-    T : TokenType,
-          E: TokenTypeError<P> {
+
+impl<'a, P, T, E> Iterator for TextStreamSpanIterator<'a, P, T, E>
+where
+    P: TextPos,
+    T: TokenType,
+    E: TokenTypeError<P>,
+{
     type Item = Result<T, E>;
-    fn next( &mut self) -> Option<Result<T, E>> {
-        match self.stream.parse( self.parsers ) {
+    fn next(&mut self) -> Option<Result<T, E>> {
+        match self.stream.parse(self.parsers) {
             Err(e) => Some(Err(e)),
-            Ok( Some((stream, token)) ) => {
+            Ok(Some((stream, token))) => {
                 self.stream = stream;
                 Some(Ok(token))
             }
