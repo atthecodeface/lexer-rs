@@ -64,7 +64,7 @@ enum ParserResult<'a, P:Parser<'a>, R> {
 
 //tp ParserFnResult
 // P:Parser<'a, Error = E>
-// type ParserFnResult<'a, P, R, E> = Result<ParserResult<'a, P, R>, E>;
+type ParserFnResult<'a, P, R, E> = Result<ParserResult<'a, P, R>, E>;
 
 // trait ParserFn<'a, P: Parser<'a>, R> : Fn(P::Input) -> Result<ParserResult<'a, P, R>, P::Error> {}
 
