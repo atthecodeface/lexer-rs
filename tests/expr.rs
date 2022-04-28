@@ -57,7 +57,7 @@ fn parse_keywords_fn( c:char, b:usize, s:Stream) -> ParseResult {
 fn test_me() {
     let a = r##"let add x y = x + y; add 2 3
 "##;
-    
+
 let parse_keywords = |c,b,s| parse_keywords_fn(c,b,s);
 let parse_comment = |c,b,s| Token::parse_comment_line(c,b,s);
 let parse_whitespace = |c,b,s| Token::parse_whitespace(c,b,s);
@@ -75,4 +75,3 @@ let parsers = [ parse_keywords, parse_whitespace, parse_comment, parse_number, p
     assert!(false);
 }
  */
-

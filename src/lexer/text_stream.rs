@@ -44,7 +44,7 @@ pub type TokenParseResult<'a, P, T, E> = Result<Option<(TextStreamSpan<'a, P>, T
 //tp TokenParser
 /// A function that maps a character, usize byte offset within the stream, and a stream to a token
 ///
-/// Parsers return Ok(Some(T)) if it parses a token of type T; Ok(None) if they fail to parse; Err(TokenTypeError) if they 
+/// Parsers return Ok(Some(T)) if it parses a token of type T; Ok(None) if they fail to parse; Err(TokenTypeError) if they
 ///
 /// P : TextPos
 ///
@@ -214,7 +214,7 @@ where
 
     //mp matches_bytes
     /// Match the text at the offset with a str
-    pub fn matches_bytes(&self, byte_ofs:usize, s: &[u8]) -> bool {
+    pub fn matches_bytes(&self, byte_ofs: usize, s: &[u8]) -> bool {
         let n = s.len();
         if byte_ofs + n > self.end {
             false
@@ -225,7 +225,7 @@ where
 
     //mp matches
     /// Match the text at the offset with a str
-    pub fn matches(&self, byte_ofs:usize, s: &str) -> bool {
+    pub fn matches(&self, byte_ofs: usize, s: &str) -> bool {
         self.matches_bytes(byte_ofs, s.as_bytes())
     }
 
@@ -290,7 +290,10 @@ where
     /// Parse the next token in a stream, returning an error if no parser matches the data
     ///
     /// At the end of the stream Ok(None) is returned
-    pub fn parse<T, E>(self, parsers: &'a [TokenParser<'a, P, T, E>]) -> TokenParseResult<'a, P, T, E>
+    pub fn parse<T, E>(
+        self,
+        parsers: &'a [TokenParser<'a, P, T, E>],
+    ) -> TokenParseResult<'a, P, T, E>
     where
         T: TokenType,
         E: TokenTypeError<P>,

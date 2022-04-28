@@ -3,7 +3,7 @@ use crate::{Pos, Span, TextPos, TextStreamSpan, TokenParseResult, TokenType, Tok
 
 //a SimpleToken
 //tt SimpleKeyword
-pub trait SimpleKeyword : std::fmt::Debug +  Copy + Clone + Sized {}
+pub trait SimpleKeyword: std::fmt::Debug + Copy + Clone + Sized {}
 
 impl SimpleKeyword for () {}
 impl SimpleKeyword for u8 {}
@@ -11,10 +11,10 @@ impl SimpleKeyword for u16 {}
 impl SimpleKeyword for u32 {}
 impl SimpleKeyword for u64 {}
 impl SimpleKeyword for usize {}
-    
+
 //tp SimpleToken
 #[derive(Debug, Copy, Clone)]
-pub enum SimpleToken<P: TextPos, K:SimpleKeyword> {
+pub enum SimpleToken<P: TextPos, K: SimpleKeyword> {
     /// Comment is '//' and up to (and not including) a newline
     CommentLine(Span<P>),
     /// ID is an id start and any id following
@@ -36,7 +36,12 @@ pub enum SimpleToken<P: TextPos, K:SimpleKeyword> {
 }
 
 //ip TokenType for SimpleToken
-impl <P, K> TokenType for SimpleToken<P, K> where P: TextPos, K:SimpleKeyword {}
+impl<P, K> TokenType for SimpleToken<P, K>
+where
+    P: TextPos,
+    K: SimpleKeyword,
+{
+}
 
 //ip SimpleToken
 impl<P, K> SimpleToken<P, K>
@@ -77,7 +82,9 @@ where
         byte_ofs: usize,
         stream: TextStreamSpan<P>,
     ) -> TokenParseResult<P, Self, E> {
-        match stream.do_while(ch, byte_ofs, &|n, ch| ((n<2) && (ch=='/')) || ((n>=2) && ch != '\n')) {
+        match stream.do_while(ch, byte_ofs, &|n, ch| {
+            ((n < 2) && (ch == '/')) || ((n >= 2) && ch != '\n')
+        }) {
             (stream, Some((pos, _n))) => {
                 let span = Span::new(pos, stream.pos());
                 Ok(Some((stream, SimpleToken::CommentLine(span))))
@@ -121,10 +128,12 @@ where
         ch: char,
         byte_ofs: usize,
         stream: TextStreamSpan<P>,
-        is_id_start : F1,
-        is_id : F2,
+        is_id_start: F1,
+        is_id: F2,
     ) -> TokenParseResult<P, Self, E> {
-        match stream.do_while(ch, byte_ofs, &|n, ch| (n==0 && is_id_start(ch)) || ((n>0) && is_id(ch))) {
+        match stream.do_while(ch, byte_ofs, &|n, ch| {
+            (n == 0 && is_id_start(ch)) || ((n > 0) && is_id(ch))
+        }) {
             (stream, Some((pos, _))) => {
                 let span = Span::new(pos, stream.pos());
                 Ok(Some((stream, SimpleToken::Id(span))))
@@ -138,13 +147,13 @@ where
         _ch: char,
         byte_ofs: usize,
         mut stream: TextStreamSpan<'a, P>,
-        keywords : &[(&[u8], K)],
+        keywords: &[(&[u8], K)],
     ) -> TokenParseResult<'a, P, Self, E> {
-        for (k,v) in keywords {
+        for (k, v) in keywords {
             if stream.matches_bytes(byte_ofs, k) {
                 let n = k.len();
                 let pos = stream.pos();
-                stream = stream.consumed_chars(byte_ofs+n, n);
+                stream = stream.consumed_chars(byte_ofs + n, n);
                 return Ok(Some((stream, SimpleToken::Keyword(pos, *v))));
             }
         }

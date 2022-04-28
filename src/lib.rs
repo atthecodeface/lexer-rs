@@ -1,13 +1,16 @@
 //a Documentation
 //a Imports
 mod lexer;
+mod parser;
+pub mod parser_fn;
 
 pub use crate::lexer::{LineCol, Pos, Span, TextPos};
-pub use crate::lexer::{SimpleToken, SimpleKeyword};
+pub use crate::lexer::{SimpleKeyword, SimpleToken};
 pub use crate::lexer::{
     TextStream, TextStreamSpan, TextStreamSpanIterator, TokenParseError, TokenParseResult,
     TokenParser, TokenType, TokenTypeError,
 };
+pub use parser::{Parser, ParserFnInput, ParserFnResult, ParserInputResult, ParserResult};
 
 #[test]
 fn test_me() {
@@ -20,25 +23,21 @@ fn test_me() {
     type TSSpan<'a> = TextStreamSpan<'a, P>;
     type Token = SimpleToken<P, K>;
     type E = TokenParseError<P>;
-    
-    let span : TSSpan  = stream.as_span();
+
+    let span: TSSpan = stream.as_span();
     // Note must use closures here as Rust cannot resolve the lifetimes of the functions otherwise
-    let parse_whitespace =
-        |c,b,s| Token::parse_whitespace(c,b,s);
-    fn parse_keywords( c:char, b:usize, s:TSSpan) -> TokenParseResult<P, Token, E> {
-    let keywords : [ (&[u8], u64); 2] = [
-        (b"let", 0),
-        (b"if", 1),
-    ];
-        Token::parse_keyword(c,b,s, &keywords)
+    let parse_whitespace = |c, b, s| Token::parse_whitespace(c, b, s);
+    fn parse_keywords(c: char, b: usize, s: TSSpan) -> TokenParseResult<P, Token, E> {
+        let keywords: [(&[u8], u64); 2] = [(b"let", 0), (b"if", 1)];
+        Token::parse_keyword(c, b, s, &keywords)
     }
-    let parse_id = |c,b,s| Token::parse_id(c,b,s, char::is_alphabetic, char::is_alphanumeric);
+    let parse_id = |c, b, s| Token::parse_id(c, b, s, char::is_alphabetic, char::is_alphanumeric);
     let parsers = [
-        |c,b,s| Token::parse_digits(c,b,s),
+        |c, b, s| Token::parse_digits(c, b, s),
         parse_whitespace,
-        |c, b, s| parse_keywords(c,b,s),
+        |c, b, s| parse_keywords(c, b, s),
         parse_id,
-        |c,b,s| Token::parse_char(c,b,s),
+        |c, b, s| Token::parse_char(c, b, s),
     ];
     for t in span.iter_tokens(&parsers) {
         println!("{:?}", t.unwrap());
