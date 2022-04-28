@@ -5,8 +5,15 @@ use crate::{Pos, Span, TextPos};
 
 //a External traits
 //tt TokenType
-/// The trait required of a token
+/// The traits required of a token
 pub trait TokenType: Sized + std::fmt::Debug + Copy {}
+
+//ip TokenType for char and u*
+impl TokenType for char {}
+impl TokenType for u8 {}
+impl TokenType for u16 {}
+impl TokenType for u32 {}
+impl TokenType for usize {}
 
 //tt TokenTypeError
 /// A trait required of an error - a char that does not match any
@@ -26,20 +33,33 @@ pub trait TokenTypeError<P: TextPos>: Sized + std::error::Error {
 ///
 /// If the result is Some((stream, token)) then the token has been
 /// parsed and the stream has been moved on beyond that token
-// pub type TokenParseResult<'a, P : TextPos, T : TokenType, E: TokenTypeError<P>> = Result<Option<(TextStreamSpan<'a, P>, T)>, E>;
+///
+/// P : TextPos
+///
+/// T : TokenType
+///
+/// E: TokenTypeError<P>
 pub type TokenParseResult<'a, P, T, E> = Result<Option<(TextStreamSpan<'a, P>, T)>, E>;
 
 //tp TokenParser
-/// The type of ...
-// pub type TokenParser<'a, P : TextPos, T : TokenType, E: TokenTypeError<P>> = dyn Fn(char, usize, TextStreamSpan<'a, P>) -> TokenParseResult<'a, P, T, E>;
-// pub type TokenParser<'a, P,  T, E> = dyn Fn(char, usize, TextStreamSpan<'a, P>) -> TokenParseResult<'a, P, T, E>;
-// pub type TokenParser<'a, P,  T, E> = fn(char, usize, TextStreamSpan<'a, P>) -> TokenParseResult<'a, P, T, E>;
-// pub type TokenParser<P, T, E> =
-//    for<'a> fn(char, usize, TextStreamSpan<'a, P>) -> TokenParseResult<'a, P, T, E>;
+/// A function that maps a character, usize byte offset within the stream, and a stream to a token
+///
+/// Parsers return Ok(Some(T)) if it parses a token of type T; Ok(None) if they fail to parse; Err(TokenTypeError) if they 
+///
+/// P : TextPos
+///
+/// T : TokenType
+///
+/// E: TokenTypeError<P>
 pub type TokenParser<'a, P, T, E> =
     fn(char, usize, TextStreamSpan<'a, P>) -> TokenParseResult<'a, P, T, E>;
 
-//tp TokenParserError
+//tp TokenParseError
+/// A simple implementation of a type supporting TokenTypeError
+///
+/// An error in parsing a token - most often an 'unrecognized character'
+///
+/// P : TextPos
 #[derive(Debug)]
 pub struct TokenParseError<P>
 where
@@ -49,7 +69,10 @@ where
     pos: Pos<P>,
 }
 
+//ip Error for TokenParseError
 impl<P: TextPos> std::error::Error for TokenParseError<P> {}
+
+//ip TokenTypeError for TokenParseError
 impl<P> TokenTypeError<P> for TokenParseError<P>
 where
     P: TextPos,
@@ -60,6 +83,8 @@ where
         Self { s, pos }
     }
 }
+
+//ip Display for TokenParseError
 impl<P> std::fmt::Display for TokenParseError<P>
 where
     P: TextPos,
@@ -262,6 +287,9 @@ where
     }
 
     //mp parse
+    /// Parse the next token in a stream, returning an error if no parser matches the data
+    ///
+    /// At the end of the stream Ok(None) is returned
     pub fn parse<T, E>(self, parsers: &'a [TokenParser<'a, P, T, E>]) -> TokenParseResult<'a, P, T, E>
     where
         T: TokenType,
@@ -292,6 +320,8 @@ where
     }
 }
 
+//tp TextStreamSpanIterator
+/// An iterator over a TextStream presenting the parsed Tokens from it
 pub struct TextStreamSpanIterator<'a, P, T, E>
 where
     P: TextPos,
@@ -302,17 +332,20 @@ where
     parsers: &'a [TokenParser<'a, P, T, E>],
 }
 
+//ip TextStreamSpanIterator
 impl<'a, P, T, E> TextStreamSpanIterator<'a, P, T, E>
 where
     P: TextPos,
     T: TokenType,
     E: TokenTypeError<P>,
 {
+    /// Create a new token stream iterator to parse a string and deliver tokens
     pub fn new(stream: TextStreamSpan<'a, P>, parsers: &'a [TokenParser<'a, P, T, E>]) -> Self {
         Self { stream, parsers }
     }
 }
 
+//ip Iterator for TextStreamSpanIterator
 impl<'a, P, T, E> Iterator for TextStreamSpanIterator<'a, P, T, E>
 where
     P: TextPos,

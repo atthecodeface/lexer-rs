@@ -2,9 +2,9 @@
 //a Imports
 mod lexer;
 
-pub use lexer::{LineCol, Pos, Span, TextPos};
-pub use lexer::SimpleToken;
-pub use lexer::{
+pub use crate::lexer::{LineCol, Pos, Span, TextPos};
+pub use crate::lexer::{SimpleToken, SimpleKeyword};
+pub use crate::lexer::{
     TextStream, TextStreamSpan, TextStreamSpanIterator, TokenParseError, TokenParseResult,
     TokenParser, TokenType, TokenTypeError,
 };
@@ -43,5 +43,5 @@ fn test_me() {
     for t in span.iter_tokens(&parsers) {
         println!("{:?}", t.unwrap());
     }
-    assert!(false);
+    // assert!(false);
 }
