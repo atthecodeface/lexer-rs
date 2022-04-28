@@ -26,6 +26,80 @@ type Token = char;
 /// Stream is a text stream using Pos = {} as postition
 type Stream<'a> = TextStreamSpan<'a, Pos>;
 
+//tt Parser
+trait Parser<'a> : Sized {
+    type Token : 'a;
+    type Pos : TextPos;
+    type Error : TokenTypeError<Self::Pos> + 'a;
+    type Input : ParserFnInput<'a, Self> + 'a;
+}
+// P:Parser<'a>
+/// type ParserInputResult<'a, P> = Result<Option<(P::Input, P::Token)>, P::Error>;
+
+//tt ParserFnInput
+/// Trait required by a parser of its input
+///
+/// The parser invokes this to get the tokens that it needs to match
+///
+/// E : PFnError<P>
+// trait ParserFnInput<'a, P:Parser<'a>> : Sized + Copy
+trait ParserFnInput<'a, P:Parser<'a, Input = Self>> : Sized + Copy
+{
+    fn get_token(self) -> Result<Option<(Self, P::Token)>, P::Error>;
+}
+
+//tp ParserResult1
+enum ParserResult1<'a, P:Parser<'a>, R> {
+    Mismatched,
+    Matched( P::Input, R ),
+    // _Bar(std::convert::Infallible, &'a std::marker::PhantomData<(P,E)>),
+}
+
+//tp ParserResult
+enum ParserResult<'a, P:Parser<'a>, R> {
+    Mismatched,
+    Matched( P::Input, R ),
+    _Bar(std::convert::Infallible, &'a std::marker::PhantomData<P>),
+}
+
+//tp ParserFnResult
+// P:Parser<'a, Error = E>
+// type ParserFnResult<'a, P, R, E> = Result<ParserResult<'a, P, R>, E>;
+
+// trait ParserFn<'a, P: Parser<'a>, R> : Fn(P::Input) -> Result<ParserResult<'a, P, R>, P::Error> {}
+
+//fp parser_fn_map_token
+/// A parser function generator that allows application of a function
+/// to a token, returning Some(R) if the token is matched and maps to
+/// a value R, or None if the token is not matched by the parser
+///
+/// Use cases might be to convert a 'clocked' or 'comb' token to an
+/// internal enumeration for a signal type
+// This works except for the trait bound issue 
+// trait ParserFn<'a, P: Parser<'a>, R> : Fn(P::Input) -> Result<ParserResult<'a, P, R>, P::Error> {}
+// fn parser_fn_map_token<'a, P, R, F>(f:F) -> impl ParserFn<'a, P, R>
+type X<'a, P, R> = Result<ParserResult<'a, P, R>, <P as Parser<'a>>::Error>;
+fn parser_fn_map_token<'a, P, I : ParserFnInput<'a, P> , R, F>(f:F) -> impl Fn(I) -> X<'a, P, R>
+// fn parser_fn_map_token<'a, P, R, F>(f:F) -> impl Fn(P::Input) -> Result<ParserResult<'a, P, P::Input, R>, P::Error>
+where P:Parser<'a, Input = I>,
+      F:Fn(P::Token) -> Option<R>,
+{
+    use ParserResult::*;
+    move |input : P::Input| {
+        match input.get_token()? {
+            Some((input, token)) => {
+                if let Some(r) = f(token) {
+                    return Ok(Matched(input, r));
+                }
+            }
+            _ => (),
+        }
+        Ok(Mismatched)
+    }
+}
+
+
+//a PFn
 //tt PFnError
 /// The error type returned by the TokenParser that we use
 ///
@@ -35,6 +109,24 @@ type Stream<'a> = TextStreamSpan<'a, Pos>;
 trait PFnError<P : TextPos> : TokenTypeError<P> {}
 impl <P:TextPos, T:TokenTypeError<P>> PFnError<P> for T {}
     
+//tp PFnInputResult
+/// Result of a Parser function given a particular input
+///
+/// I:PFnInput<'a, E>
+///
+/// E : PFnError<P>
+type PFnInputResult<'a, I, E> = Result<Option<(I, Token)>, E>;
+
+//tt PFnInput
+/// Trait required by a parser of its input
+///
+/// The parser invokes this to get the tokens that it needs to match
+///
+/// E : PFnError<P>
+trait PFnInput<'a, E> : Sized + Copy {
+    fn get_token(self) -> PFnInputResult<'a, Self, E>;
+}
+
 //tp PResult
 /// Result of a parser
 ///
@@ -60,58 +152,6 @@ enum PResult<'a, I : PFnInput<'a, E>, P:TextPos, R, E:PFnError<P>> {
 ///
 /// E : PFnError<P>
 type PFnResult<'a, I, P, R, E> = Result<PResult<'a, I, P, R, E>, E>;
-
-//tt PFnInput
-/// Trait required by a parser of its input
-///
-/// The parser invokes this to get the tokens that it needs to match
-///
-/// E : PFnError<P>
-trait PFnInput<'a, E> : Sized + Copy {
-    fn get_token(self) -> PFnInputResult<'a, Self, E>;
-}
-
-//tp PFnInputResult
-/// Result of a Parser function given a particular input
-///
-/// I:PFnInput<'a, E>
-///
-/// E : PFnError<P>
-type PFnInputResult<'a, I, E> = Result<Option<(I, Token)>, E>;
-
-//a AbcTokenStream
-//tp AbcParseError
-type AbcParseError = TokenParseError<Pos>;
-
-//tp AbcTokenStream
-/// A stream of tokens of a, b or c
-#[derive(Debug, Copy, Clone)]
-struct AbcTokenStream<'a> {
-    stream : Stream<'a>,
-}
-
-//ip AbcTokenStream
-impl <'a> AbcTokenStream <'a> {
-    //fi parse_char_fn
-    /// Parser function to return a Token (== char) if it is one of a-c; otherwise it returns None
-    fn parse_char_fn( ch: char,  byte_ofs: usize, stream: Stream ) -> Result<Option<(Stream, Token)>, TokenParseError<Pos>> {
-        let pos = stream.pos();
-        if ('a'..='c').contains(&ch) {
-            Ok(Some((stream.consume_char(byte_ofs, ch), ch)))
-        } else {
-            Ok(None)
-        }
-    }
-}
-
-//ip PFnInput for AbcTokenStream
-impl <'a> PFnInput<'a, AbcParseError> for AbcTokenStream <'a> {
-    //
-    fn get_token(self) -> Result<Option<(Self, char)>, AbcParseError> {
-        Ok( self.stream.parse( &[Self::parse_char_fn] )?
-            .map(|(stream, t)| (Self {stream}, t)) )
-    }
-}
 
 //a pfn_*
 //fp pfn_map_token
@@ -291,6 +331,40 @@ P : TextPos + 'a,
             }
         };
         Ok(Matched(stream, (r1,r2,r3)))
+    }
+}
+
+//a AbcTokenStream
+//tp AbcParseError
+type AbcParseError = TokenParseError<Pos>;
+
+//tp AbcTokenStream
+/// A stream of tokens of a, b or c
+#[derive(Debug, Copy, Clone)]
+struct AbcTokenStream<'a> {
+    stream : Stream<'a>,
+}
+
+//ip AbcTokenStream
+impl <'a> AbcTokenStream <'a> {
+    //fi parse_char_fn
+    /// Parser function to return a Token (== char) if it is one of a-c; otherwise it returns None
+    fn parse_char_fn( ch: char,  byte_ofs: usize, stream: Stream ) -> Result<Option<(Stream, Token)>, TokenParseError<Pos>> {
+        let pos = stream.pos();
+        if ('a'..='c').contains(&ch) {
+            Ok(Some((stream.consume_char(byte_ofs, ch), ch)))
+        } else {
+            Ok(None)
+        }
+    }
+}
+
+//ip PFnInput for AbcTokenStream
+impl <'a> PFnInput<'a, AbcParseError> for AbcTokenStream <'a> {
+    //
+    fn get_token(self) -> Result<Option<(Self, char)>, AbcParseError> {
+        Ok( self.stream.parse( &[Self::parse_char_fn] )?
+            .map(|(stream, t)| (Self {stream}, t)) )
     }
 }
 
