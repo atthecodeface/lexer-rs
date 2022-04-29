@@ -1,8 +1,8 @@
 //a Imports
 use lexer::parser_fn;
-use lexer::{Parser, ParserFnInput, ParserInputResult};
+use lexer::{Parser, ParserFnInput};
 use lexer::{TextPos, TextStream, TextStreamSpan};
-use lexer::{TokenParseError, TokenTypeError};
+use lexer::{TokenParseError};
 
 //a Pos
 //tp Pos
@@ -20,9 +20,6 @@ impl std::fmt::Display for Pos {
 }
 
 //a AbcTokenStream
-//tp AbcParseError
-type AbcParseError = TokenParseError<Pos>;
-
 //tp AbcTokenStream
 /// A stream of tokens of a, b or c
 #[derive(Debug, Copy, Clone)]
@@ -47,7 +44,6 @@ impl<'a> AbcTokenStream<'a> {
         byte_ofs: usize,
         stream: TextStreamSpan<Pos>,
     ) -> Result<Option<(TextStreamSpan<Pos>, char)>, TokenParseError<Pos>> {
-        let pos = stream.pos();
         if ('a'..='c').contains(&ch) {
             Ok(Some((stream.consume_char(byte_ofs, ch), ch)))
         } else {
@@ -78,9 +74,9 @@ fn test_me() {
     let abcs = AbcTokenStream { stream };
 
     let is_a = parser_fn::map_token(|t| if t == 'a' { Some('a') } else { None });
-    let at_least_one_a = parser_fn::match_count(|t| (t == 'a'), (1..1000));
-    let some_bs = parser_fn::match_count(|t| (t == 'b'), (0..1000));
-    let at_least_one_c = parser_fn::match_count(|t| (t == 'c'), (1..1000));
+    let at_least_one_a = parser_fn::match_count(|t| (t == 'a'), 1..1000);
+    let some_bs = parser_fn::match_count(|t| (t == 'b'), 0..1000);
+    let at_least_one_c = parser_fn::match_count(|t| (t == 'c'), 1..1000);
     let grammar1 = parser_fn::tuple3_ref(&at_least_one_a, &some_bs, &at_least_one_c);
     let grammar2 = parser_fn::tuple3_ref(&at_least_one_c, &some_bs, &at_least_one_a);
     let either_grammar = parser_fn::first_of_2_ref(&grammar2, &grammar1);

@@ -40,9 +40,8 @@ pub type ParserInputResult<'a, P> =
 /// turbofish annotation requirements.
 ///
 /// Requiring Copy here allows parser functions to manipulate the
-/// input simply; an alternative would be to pass &self in here, and
-/// require the implementation of get_token to clone the Input
-pub trait ParserFnInput<'a, P: Parser<'a, Input = Self>>: Copy {
+/// input simply without explicit cloning
+pub trait ParserFnInput<'a, P: Parser<'a, Input = Self>> : Copy {
     fn get_token(&self) -> ParserInputResult<'a, P>;
 }
 
