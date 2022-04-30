@@ -1,8 +1,8 @@
 //a Imports
 use lexer::parser_fn;
-use lexer::{Parser, ParserFnInput};
+use lexer::TokenParseError;
+use lexer::{Parser, ParserFnInput, ParserFnResult};
 use lexer::{TextPos, TextStream, TextStreamSpan};
-use lexer::{TokenParseError};
 
 //a Pos
 //tp Pos
@@ -79,7 +79,9 @@ fn test_me() {
     let at_least_one_c = parser_fn::match_count(|t| (t == 'c'), 1..1000);
     let grammar1 = parser_fn::tuple3_ref(&at_least_one_a, &some_bs, &at_least_one_c);
     let grammar2 = parser_fn::tuple3_ref(&at_least_one_c, &some_bs, &at_least_one_a);
-    let either_grammar = parser_fn::first_of_2_ref(&grammar2, &grammar1);
+    // let either_grammar = parser_fn::first_of_2_ref(&grammar2, &grammar1);
+    let grammars: [&dyn Fn(_) -> _; 2] = [&grammar2, &grammar1];
+    let either_grammar = parser_fn::first_of_n_dyn_ref(grammars);
     println!("{:?}", is_a(abcs));
     println!("{:?}", at_least_one_a(abcs));
     println!("{:?}", grammar1(abcs));
