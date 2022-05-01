@@ -28,7 +28,7 @@ struct AbcTokenStream<'a> {
 }
 
 //ip Parser for AbcTokenStream
-impl<'a> Parser<'a> for AbcTokenStream<'a> {
+impl<'a> Parser for AbcTokenStream<'a> {
     type Token = char;
     type Pos = Pos;
     type Error = TokenParseError<Pos>;
@@ -53,7 +53,7 @@ impl<'a> AbcTokenStream<'a> {
 }
 
 //ip ParserFnInput for AbcTokenStream
-impl<'a> ParserFnInput<'a, AbcTokenStream<'a>> for AbcTokenStream<'a> {
+impl <'a> ParserFnInput<AbcTokenStream<'a>> for AbcTokenStream<'a> {
     //
     fn get_token(&self) -> Result<Option<(Self, char)>, TokenParseError<Pos>> {
         Ok(self
