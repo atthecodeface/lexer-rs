@@ -94,57 +94,36 @@ where
     }
 }
 
-//a TextStream, TextStreamSpan
-//tp TextStream
-/// A wrapper around a str slice that allows simple access and
-/// matching
-#[derive(Debug)]
-pub struct TextStream<'a> {
+//a TextStreamSpan
+//tp TextStreamSpan
+#[derive(Debug, Copy, Clone)]
+pub struct TextStreamSpan<'a, P>
+where
+    P: TextPos,
+{
     text: &'a str,
+    end: usize,
+    pos: Pos<P>,
 }
 
-//ip TextStream
-impl<'a> TextStream<'a> {
+//ip TextStreamSpan
+impl<'a, P> TextStreamSpan<'a, P>
+where
+    P: TextPos,
+{
     //fp new
     /// Create a new [TextStream] by borrowing a [str]
     pub fn new(text: &'a str) -> Self {
-        Self { text }
-    }
-
-    //mp as_span
-    /// Borrow the full [TextStreamSpan] of the [TextStream]
-    pub fn as_span<P: TextPos>(&self) -> TextStreamSpan<P> {
-        TextStreamSpan::new(self)
-    }
-
-    //mp get_text_span
-    /// Get the text of a [Span] provided by the parsers
-    ///
-    /// Safety : The Span has been provided by a parser and so the
-    /// byte offsets are indeed utf8 character boundaries
-    pub fn get_text_span<P: TextPos>(&self, span: Span<P>) -> &str {
-        unsafe { self.get_text(span.byte_range()) }
-    }
-
-    //mp get_text
-    /// Get the text between a start and end byte offset
-    ///
-    /// Safety : The byte offsets must correspond to utf8 character points
-    unsafe fn get_text(&self, range: Range<usize>) -> &str {
-        self.text.get_unchecked(range)
-    }
-
-    //mp peek
-    /// Get the utf8 chararacter at the byte offset, or None at the end of a string
-    fn peek(&self, byte_ofs: usize) -> Option<char> {
-        if byte_ofs >= self.text.len() {
-            None
-        } else {
-            // Safety : byte_ofs is maintained as a utf8 character
-            // point boundary within or at the end of the str
-            let text = unsafe { self.text.get_unchecked(byte_ofs..self.text.len()) };
-            text.chars().next()
+        Self {
+            text,
+            end: text.len(),
+            pos: Pos::default(),
         }
+    }
+
+    //ap pos
+    pub fn pos(&self) -> Pos<P> {
+        self.pos
     }
 
     //mp as_bytes
@@ -156,60 +135,50 @@ impl<'a> TextStream<'a> {
         &self.text.as_bytes()[ofs..ofs + n]
     }
 
-    //zz All done
-}
-
-//tp TextStreamSpan
-#[derive(Debug, Copy, Clone)]
-pub struct TextStreamSpan<'a, P>
-where
-    P: TextPos,
-{
-    stream: &'a TextStream<'a>,
-    end: usize,
-    pos: Pos<P>,
-}
-
-//ip TextStreamSpan
-impl<'a, P> TextStreamSpan<'a, P>
-where
-    P: TextPos,
-{
-    //fp new
-    /// Create a new [TextStreamSpan] of the whole of a [TextStream]
-    fn new(stream: &'a TextStream<'a>) -> Self {
-        Self {
-            stream,
-            end: stream.text.len(),
-            pos: Pos::default(),
-        }
+    //mp get_text_of_range
+    /// Get the text between a start and end byte offset
+    ///
+    /// Safety : The byte offsets must correspond to utf8 character points
+    unsafe fn get_text_of_range(&self, range: Range<usize>) -> &str {
+        self.text.get_unchecked(range)
     }
 
     //mp get_text
-    /// Get the text corresponding to this span
-    pub fn get_text(&self) -> &str {
-        // Safety : byte_ofs is maintained as a utf8 character
-        // point boundary within or at the end of the str
-        unsafe { self.stream.get_text(self.pos.byte_ofs()..self.end) }
+    /// Get all the text of this stream - from pos to end
+    ///
+    /// Safety : The Span has been provided by a parser and so the
+    /// byte offsets are indeed utf8 character boundaries
+    pub fn get_text(&self, span: Span<P>) -> &str {
+        unsafe { self.get_text_of_range(self.pos.byte_ofs()..self.end) }
     }
 
-    //mp pos
-    pub fn pos(&self) -> Pos<P> {
-        self.pos
+    //mp get_text_span
+    /// Get the text of a [Span] provided by the parsers
+    ///
+    /// Safety : The Span has been provided by a parser and so the
+    /// byte offsets are indeed utf8 character boundaries
+    pub fn get_text_span(&self, span: Span<P>) -> &str {
+        unsafe { self.get_text_of_range(span.byte_range()) }
+    }
+
+    //mp peek_at
+    /// Get the utf8 chararacter at the byte offset, or None at the end of a string
+    fn peek_at(&self, byte_ofs: usize) -> Option<char> {
+        if byte_ofs >= self.text.len() {
+            None
+        } else {
+            // Safety : byte_ofs is maintained as a utf8 character
+            // point boundary within or at the end of the str
+            let text = unsafe { self.text.get_unchecked(byte_ofs..self.text.len()) };
+            text.chars().next()
+        }
     }
 
     //mp peek
     /// Peek at the next character
     #[inline]
     pub fn peek(&self) -> Option<char> {
-        self.stream.peek(self.pos.byte_ofs())
-    }
-
-    //mp peek_at
-    /// Peek at the a byte offset ahead
-    #[inline]
-    pub fn peek_at(&self, byte_ofs: usize) -> Option<char> {
-        self.stream.peek(byte_ofs)
+        self.peek_at(self.pos.byte_ofs())
     }
 
     //mp matches_bytes
@@ -219,7 +188,7 @@ where
         if byte_ofs + n > self.end {
             false
         } else {
-            s == self.stream.as_bytes(byte_ofs, n)
+            s == self.as_bytes(byte_ofs, n)
         }
     }
 

@@ -2,7 +2,7 @@
 use lexer::parser_fn;
 use lexer::TokenParseError;
 use lexer::{Parser, ParserFnInput, ParserFnResult};
-use lexer::{TextPos, TextStream, TextStreamSpan};
+use lexer::{TextPos, TextStreamSpan};
 
 //a Pos
 //tp Pos
@@ -69,8 +69,7 @@ impl<'a> ParserFnInput<'a, AbcTokenStream<'a>> for AbcTokenStream<'a> {
 fn test_me() {
     let a = r##"aabbbc"##;
 
-    let text = TextStream::new(a);
-    let stream = text.as_span();
+    let stream = TextStreamSpan::new(a);
     let abcs = AbcTokenStream { stream };
 
     let is_a = parser_fn::map_token(|t| if t == 'a' { Some('a') } else { None });
