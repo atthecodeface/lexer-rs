@@ -5,39 +5,112 @@ use paste::paste;
 
 use crate::{Parser, ParserFnInput, ParserFnResult, ParserResult};
 
+//a TO DO
+// not(parser) : mismatch -> Match(), Match -> Mismatched
+// ValueOfFirst N
+// e.g. value_of_first_2( (parser_a, 0), (parser_b, 1) )
+// Map
+// e.g. map( parser, fn |x| Thing::Fred(x) )
+// 
+// e.g. map( parser, fn |x| Thing::Fred(x) )
+//
+// opt (matched(x) -> matched(Some(x)), mismatch -> Matched(none))
+// recognize (matched(x) -> matched(span))
+// consumed (matched(x) -> matched((span,x)))
+// success(r) -> Matched(r)
+// fail -> Mismatched
+//
+// fold(init, f) -> Mismatched -> matched(acc); Matched -> fold(f(acc, r))
+//  optionally requires at least one match
+//
+// vec() -> Matched(r) -> push(r)
+//  optionally requires at least one match
+//
+// separated_list
+//
+// list (min size, max size)
+//
+// separated pair
+
 //a Macros
 //mi one_f_one_r
 /// Macro to allow multiple functions with the same return type
 macro_rules! one_f_one_r_slice {
-    ( $fn_name_dyn_ref:ident,
-      $fs:ident
+    ( $fn_name:ident,
+      $fs:ident,
+      $stream : ident
       { $($content:tt)* }
     ) => {
-pub fn $fn_name_dyn_ref<'a, 'b, P, I: ParserFnInput<'a, P>, R, const N : usize>(
-    $fs: [ &'b (dyn Fn(I) -> ParserFnResult<'a, P, R> +'b) ; N],
+paste! {
+
+    pub fn [<$fn_name _dyn_ref>] <'a, 'b, P, I: ParserFnInput<'a, P>, R, const N : usize>(
+    $fs: [ &'b (dyn Fn(I) -> ParserFnResult<'a, P, R> +'b) ; N]
 ) -> impl Fn(I) -> ParserFnResult<'a, P, R> + 'b
 where
     P: Parser<'a, Input = I>,
     'a: 'b,
-        { $($content)* }
+    {
+    move |$stream| { $($content)* }
+} // pub fn
+
+    pub fn [<$fn_name _dyn_ref_else>] <'a, 'b, P, I: ParserFnInput<'a, P>, R, G, const N : usize>(
+    $fs: [ &'b (dyn Fn(I) -> ParserFnResult<'a, P, R> +'b) ; N],
+    g : G,
+) -> impl Fn(I) -> ParserFnResult<'a, P, R> + 'b
+where
+        P: Parser<'a, Input = I>,
+    G : Fn() -> <P as Parser<'a>>::Error + 'b,
+    'a: 'b,
+    {
+    move |$stream| {
+        match ( { $($content)* } )? {
+            ParserResult::Mismatched => {
+                Err(g())
+            }
+            x => Ok(x),
+        }
     }
-}
+} // pub fn
+} // paste
+    }} // macro_rules
 
 //mi many_f_one_r
 /// Macro to allow multiple functions with the same return type
 macro_rules! many_f_one_r {
     ( $fn_name:ident,
       ( $($f:ident : $ft:ident  , )+  $(,)? )
+      $stream : ident
       { $($content:tt)* }
     ) => {
 paste! {
+
 pub fn $fn_name<'a, P, I: ParserFnInput<'a, P>, R, $($ft, )*>(
     $( $f : $ft , )*
 ) -> impl Fn(I) -> ParserFnResult<'a, P, R>
 where
     P: Parser<'a, Input = I>,
     $( $ft: Fn(I) -> ParserFnResult<'a, P, R>, )*
-        { $($content)* }
+    {
+    move |$stream| { $($content)* }
+} // pub fn
+
+pub fn [< $fn_name _else >] <'a, P, I: ParserFnInput<'a, P>, R, $($ft, )* G>(
+    $( $f : $ft , )*
+    g : G,
+) -> impl Fn(I) -> ParserFnResult<'a, P, R>
+where
+    P: Parser<'a, Input = I>,
+    G : Fn() -> <P as Parser<'a>>::Error,
+    $( $ft: Fn(I) -> ParserFnResult<'a, P, R>, )*
+    {
+    move |$stream|
+        match ( { $($content)* } )? {
+            ParserResult::Mismatched => {
+                Err(g())
+            }
+            x => Ok(x),
+        }
+} // pub fn
 
 pub fn [< $fn_name _ref>] <'a, 'b, P, I: ParserFnInput<'a, P>, R, $($ft, )*>(
     $( $f : &'b $ft , )*
@@ -46,7 +119,9 @@ where
     P: Parser<'a, Input = I>,
     'a: 'b,
     $( $ft: Fn(I) -> ParserFnResult<'a, P, R> +'b, )*
-        { $($content)* }
+    {
+    move |$stream| { $($content)* }
+} // pub fn
 
 pub fn [< $fn_name _dyn_ref>] <'a, 'b, P, I: ParserFnInput<'a, P>, R>(
     $( $f : &'b (dyn Fn(I) -> ParserFnResult<'a, P, R> +'b) , )*
@@ -54,20 +129,21 @@ pub fn [< $fn_name _dyn_ref>] <'a, 'b, P, I: ParserFnInput<'a, P>, R>(
 where
     P: Parser<'a, Input = I>,
     'a: 'b,
-        { $($content)* }
-
-}
+    {
+    move |$stream| { $($content)* }
+} // pub fn
     }
-}
+    }}
 
 //mi many_f_many_r
 /// Macro to allow multiple functions with the individual return types
 macro_rules! many_f_many_r {
-    ( $fn_name:ident, $fn_name_ref:ident,
+    ( $fn_name:ident,
       ( $($f:ident : $ft:ident : $rt:ident),+  $(,)? ),
       $r:ty,
       { $($content:tt)* }
     ) => {
+paste! {
 pub fn $fn_name<'a, P, I: ParserFnInput<'a, P>, $($rt,)* $($ft, )*>(
     $( $f : $ft , )*
 ) -> impl Fn(I) -> ParserFnResult<'a, P, $r >
@@ -76,7 +152,7 @@ where
     $( $ft: Fn(I) -> ParserFnResult<'a, P, $rt>, )*
         { $($content)* }
 
-pub fn $fn_name_ref<'a, 'b, P, I: ParserFnInput<'a, P>, $($rt,)* $($ft, )*>(
+pub fn [<$fn_name _ref>]<'a, 'b, P, I: ParserFnInput<'a, P>, $($rt,)* $($ft, )*>(
     $( $f : &'b $ft , )*
 ) -> impl Fn(I) -> ParserFnResult<'a, P, $r> + 'b
 where
@@ -84,6 +160,28 @@ where
     'a: 'b,
     $( $ft: Fn(I) -> ParserFnResult<'a, P, $rt> +'b, )*
         { $($content)* }
+    }
+    }
+}
+
+//a Success and fail
+pub fn success<'a, P, I: ParserFnInput<'a, P>, R:Copy>(result:R
+) -> impl Fn(I) -> ParserFnResult<'a, P, R>
+where
+    P: Parser<'a, Input = I>,
+{
+    use ParserResult::*;
+    move |stream| {
+        Ok(Matched(stream, result))
+    }
+}
+pub fn fail<'a, P, I: ParserFnInput<'a, P>, R>(_unused:R) -> impl Fn(I) -> ParserFnResult<'a, P, R>
+where
+    P: Parser<'a, Input = I>,
+{
+    use ParserResult::*;
+    move |stream| {
+        Ok(Mismatched)
     }
 }
 
@@ -168,32 +266,27 @@ where
 /// The functions are borrowed, so the returned parser function has a
 /// lifetime 'b that matches that; the input (lifetime 'a) must
 /// outlive the resultant parser function
-one_f_one_r_slice! { first_of_n_dyn_ref, fs {
-use ParserResult::*;
-    move |stream| {
+one_f_one_r_slice! { first_of_n, fs, stream {
         for f in fs {
-            if let Matched(post_token, token) = f(stream)? {
-                return Ok(Matched(post_token, token));
+            if let ParserResult::Matched(post_token, token) = f(stream)? {
+                return Ok(ParserResult::Matched(post_token, token));
             }
         }
-        Ok(Mismatched)
-    }
+        Ok(ParserResult::Mismatched)
 }}
 
-many_f_one_r! { first_of_2, ( f1 : F1, f2 : F2, ) {
+many_f_one_r! { first_of_2, ( f1 : F1, f2 : F2, ) stream {
 use ParserResult::*;
-move |stream| {
     if let Matched(post_token, token) = f1(stream)? {
         Ok(Matched(post_token, token))
     } else {
         f2(stream)
     }
-} }
+}
     }
 
-many_f_one_r! { first_of_3, ( f1 : F1, f2 : F2, f3 : F3, ) {
+many_f_one_r! { first_of_3, ( f1 : F1, f2 : F2, f3 : F3, ) stream {
 use ParserResult::*;
-move |stream| {
     if let Matched(post_token, token) = f1(stream)? {
         Ok(Matched(post_token, token))
     } else if let Matched(post_token, token) = f2(stream)? {
@@ -201,12 +294,11 @@ move |stream| {
     } else {
         f3(stream)
     }
-} }
+}
     }
 
-many_f_one_r! { first_of_4, ( f1 : F1, f2 : F2, f3 : F3, f4 : F4, )  {
+many_f_one_r! { first_of_4, ( f1 : F1, f2 : F2, f3 : F3, f4 : F4, ) stream {
 use ParserResult::*;
-move |stream| {
     if let Matched(post_token, token) = f1(stream)? {
         Ok(Matched(post_token, token))
     } else if let Matched(post_token, token) = f2(stream)? {
@@ -216,7 +308,7 @@ move |stream| {
     } else {
         f4(stream)
     }
-} }
+}
     }
 
 //a Tuples, preceded, succeeded, delimited
@@ -229,7 +321,7 @@ move |stream| {
 /// The functions are borrowed, so the returned parser function has a
 /// lifetime 'b that matches that; the input (lifetime 'a) must
 /// outlive the resultant parser function
-many_f_many_r! { pair, pair_ref, ( f1: F1 : R1, f2 : F2 : R2, ), (R1, R2), {
+many_f_many_r! { pair, ( f1: F1 : R1, f2 : F2 : R2, ), (R1, R2), {
     use ParserResult::*;
     move |stream| {
         let (stream, r1) = {
@@ -253,7 +345,7 @@ many_f_many_r! { pair, pair_ref, ( f1: F1 : R1, f2 : F2 : R2, ), (R1, R2), {
 }
 }
 
-many_f_many_r! { tuple3, tuple3_ref, ( f1: F1 : R1, f2 : F2 : R2, f3 : F3 : R3), (R1, R2, R3), {
+many_f_many_r! { tuple3, ( f1: F1 : R1, f2 : F2 : R2, f3 : F3 : R3), (R1, R2, R3), {
     use ParserResult::*;
     move |stream| {
         let (stream, r1) = {
@@ -285,7 +377,7 @@ many_f_many_r! { tuple3, tuple3_ref, ( f1: F1 : R1, f2 : F2 : R2, f3 : F3 : R3),
 }
 }
 
-many_f_many_r! { delimited, delimited_ref, ( f1: F1 : R1, f2 : F2 : R2, f3 : F3 : R3), R2, {
+many_f_many_r! { delimited, ( f1: F1 : R1, f2 : F2 : R2, f3 : F3 : R3), R2, {
     use ParserResult::*;
     move |stream| {
         let (stream, _r1) = {
@@ -317,7 +409,7 @@ many_f_many_r! { delimited, delimited_ref, ( f1: F1 : R1, f2 : F2 : R2, f3 : F3 
 }
 }
 
-many_f_many_r! { preceded, preceded_ref, ( f1: F1 : R1, f2 : F2 : R2), R2, {
+many_f_many_r! { preceded, ( f1: F1 : R1, f2 : F2 : R2), R2, {
     use ParserResult::*;
     move |stream| {
         let (stream, _r1) = {
@@ -341,7 +433,7 @@ many_f_many_r! { preceded, preceded_ref, ( f1: F1 : R1, f2 : F2 : R2), R2, {
 }
 }
 
-many_f_many_r! { succeded, succeded_ref, ( f1: F1 : R1, f2 : F2 : R2), R1, {
+many_f_many_r! { succeded, ( f1: F1 : R1, f2 : F2 : R2), R1, {
     use ParserResult::*;
     move |stream| {
         let (stream, r1) = {

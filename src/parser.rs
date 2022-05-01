@@ -19,10 +19,10 @@ use crate::lexer::{TextPos, TokenTypeError};
 /// invocations to specifiy the Parser itself, which is an
 /// anti-pattern.
 pub trait Parser<'a>: Sized {
-    type Token: 'a;
+    type Token; // : 'a;
     type Pos: TextPos;
-    type Error: TokenTypeError<Self::Pos> + 'a;
-    type Input: ParserFnInput<'a, Self> + 'a;
+    type Error: TokenTypeError<Self::Pos>; // + 'a;
+    type Input: ParserFnInput<'a, Self>; // + 'a;
 }
 
 //tp ParserInputResult
@@ -56,6 +56,7 @@ pub enum ParserResult<'a, P: Parser<'a>, R> {
 // P:Parser<'a, Error = E>
 pub type ParserFnResult<'a, P, R> = Result<ParserResult<'a, P, R>, <P as Parser<'a>>::Error>;
 
+/*
 struct ParserFnResultv2<'a, P: Parser<'a>, R>(ParserFnResult<'a, P, R>);
 
 impl<'a, P: Parser<'a>, R> std::ops::Deref for ParserFnResultv2<'a, P, R> {
@@ -64,6 +65,7 @@ impl<'a, P: Parser<'a>, R> std::ops::Deref for ParserFnResultv2<'a, P, R> {
         &self.0
     }
 }
+*/
 
 /* Try
 impl <'a, P: Parser<'a>, R> std::ops::Try for ParserFnResultv2 <'a, P, R> {
