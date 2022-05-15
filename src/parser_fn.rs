@@ -199,6 +199,7 @@ macro_rules! many_f_many_r {
     ( $fn_name:ident,
       ( $($f:ident : $ft:ident : $rt:ident),+  $(,)? ),
       $r:ty,
+      $stream : ident
       { $($content:tt)* }
     ) => {
 
@@ -210,7 +211,9 @@ pub fn $fn_name<P, I: ParserFnInput<P>, $($rt,)* $($ft, )*>(
     where
         P: Parser<Input = I>,
         $( $ft: Fn(I) -> ParserFnResult<P, $rt>, )*
-        { $($content)* }
+{
+    move |$stream| { $($content)* }
+} // pub fn
 
 pub fn [<$fn_name _ref>] <'b, P, I: ParserFnInput<P>, $($rt,)* $($ft, )*>(
     $( $f : &'b $ft , )*
@@ -218,10 +221,12 @@ pub fn [<$fn_name _ref>] <'b, P, I: ParserFnInput<P>, $($rt,)* $($ft, )*>(
 where
     P: Parser<Input = I>,
     $( $ft: Fn(I) -> ParserFnResult<P, $rt> +'b, )*
-        { $($content)* }
-    }
-    }
-}
+{
+    move |$stream| { $($content)* }
+} // pub fn
+
+        } // paste
+    }} // macro_rules
 
 //a Success and fail
 pub fn success<P, I: ParserFnInput<P>, R: Copy>(result: R) -> impl Fn(I) -> ParserFnResult<P, R>
@@ -373,9 +378,8 @@ use ParserResult::*;
 /// The functions are borrowed, so the returned parser function has a
 /// lifetime 'b that matches that; the input (lifetime 'a) must
 /// outlive the resultant parser function
-many_f_many_r! { pair, ( f1: F1 : R1, f2 : F2 : R2, ), (R1, R2), {
+many_f_many_r! { pair, ( f1: F1 : R1, f2 : F2 : R2, ), (R1, R2), stream {
     use ParserResult::*;
-    move |stream| {
         let (stream, r1) = {
             match f1(stream)? {
                 Matched(a, b) => (a, b),
@@ -395,11 +399,9 @@ many_f_many_r! { pair, ( f1: F1 : R1, f2 : F2 : R2, ), (R1, R2), {
         Ok(Matched(stream, (r1, r2)))
     }
 }
-}
 
-many_f_many_r! { tuple3, ( f1: F1 : R1, f2 : F2 : R2, f3 : F3 : R3), (R1, R2, R3), {
+many_f_many_r! { tuple3, ( f1: F1 : R1, f2 : F2 : R2, f3 : F3 : R3), (R1, R2, R3), stream {
     use ParserResult::*;
-    move |stream| {
         let (stream, r1) = {
             match f1(stream)? {
                 Matched(a, b) => (a, b),
@@ -427,11 +429,9 @@ many_f_many_r! { tuple3, ( f1: F1 : R1, f2 : F2 : R2, f3 : F3 : R3), (R1, R2, R3
         Ok(Matched(stream, (r1, r2, r3)))
     }
 }
-}
 
-many_f_many_r! { delimited, ( f1: F1 : R1, f2 : F2 : R2, f3 : F3 : R3), R2, {
+many_f_many_r! { delimited, ( f1: F1 : R1, f2 : F2 : R2, f3 : F3 : R3), R2, stream {
     use ParserResult::*;
-    move |stream| {
         let (stream, _r1) = {
             match f1(stream)? {
                 Matched(a, b) => (a, b),
@@ -457,13 +457,11 @@ many_f_many_r! { delimited, ( f1: F1 : R1, f2 : F2 : R2, f3 : F3 : R3), R2, {
             }
         };
         Ok(Matched(stream, r2))
-    }
 }
 }
 
-many_f_many_r! { preceded, ( f1: F1 : R1, f2 : F2 : R2), R2, {
+many_f_many_r! { preceded, ( f1: F1 : R1, f2 : F2 : R2), R2, stream {
     use ParserResult::*;
-    move |stream| {
         let (stream, _r1) = {
             match f1(stream)? {
                 Matched(a, b) => (a, b),
@@ -483,11 +481,9 @@ many_f_many_r! { preceded, ( f1: F1 : R1, f2 : F2 : R2), R2, {
         Ok(Matched(stream, r2))
     }
 }
-}
 
-many_f_many_r! { succeded, ( f1: F1 : R1, f2 : F2 : R2), R1, {
+many_f_many_r! { succeded, ( f1: F1 : R1, f2 : F2 : R2), R1, stream {
     use ParserResult::*;
-    move |stream| {
         let (stream, r1) = {
             match f1(stream)? {
                 Matched(a, b) => (a, b),
@@ -506,5 +502,4 @@ many_f_many_r! { succeded, ( f1: F1 : R1, f2 : F2 : R2), R1, {
         };
         Ok(Matched(stream, r1))
     }
-}
 }
