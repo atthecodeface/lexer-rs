@@ -41,26 +41,25 @@ macro_rules! one_f_one_r_slice {
       $stream : ident
       { $($content:tt)* }
     ) => {
+
 paste! {
 
-    pub fn [<$fn_name _dyn_ref>] <'a, 'b, P, I: ParserFnInput<'a, P>, R, const N : usize>(
-    $fs: [ &'b (dyn Fn(I) -> ParserFnResult<'a, P, R> +'b) ; N]
-) -> impl Fn(I) -> ParserFnResult<'a, P, R> + 'b
+pub fn [<$fn_name _dyn_ref>] <'b, P, I: ParserFnInput<P>, R, const N : usize>(
+    $fs: [ &'b (dyn Fn(I) -> ParserFnResult<P, R> +'b) ; N]
+) -> impl Fn(I) -> ParserFnResult<P, R> + 'b
 where
-    P: Parser<'a, Input = I>,
-    'a: 'b,
+    P: Parser<Input = I>,
     {
     move |$stream| { $($content)* }
 } // pub fn
 
-    pub fn [<$fn_name _dyn_ref_else>] <'a, 'b, P, I: ParserFnInput<'a, P>, R, G, const N : usize>(
-    $fs: [ &'b (dyn Fn(I) -> ParserFnResult<'a, P, R> +'b) ; N],
+pub fn [<$fn_name _dyn_ref_else>] <'b, P, I: ParserFnInput<P>, R, G, const N : usize>(
+    $fs: [ &'b (dyn Fn(I) -> ParserFnResult<P, R> +'b) ; N],
     g : G,
-) -> impl Fn(I) -> ParserFnResult<'a, P, R> + 'b
+) -> impl Fn(I) -> ParserFnResult<P, R> + 'b
 where
-        P: Parser<'a, Input = I>,
-    G : Fn() -> <P as Parser<'a>>::Error + 'b,
-    'a: 'b,
+        P: Parser<Input = I>,
+    G : Fn() -> <P as Parser>::Error + 'b,
     {
     move |$stream| {
         match ( { $($content)* } )? {
@@ -83,25 +82,24 @@ macro_rules! many_f_one_r {
       { $($content:tt)* }
     ) => {
 paste! {
-
-pub fn $fn_name<'a, P, I: ParserFnInput<'a, P>, R, $($ft, )*>(
+pub fn $fn_name<P, I: ParserFnInput<P>, R, $($ft, )*>(
     $( $f : $ft , )*
-) -> impl Fn(I) -> ParserFnResult<'a, P, R>
+) -> impl Fn(I) -> ParserFnResult<P, R>
 where
-    P: Parser<'a, Input = I>,
-    $( $ft: Fn(I) -> ParserFnResult<'a, P, R>, )*
+    P: Parser<Input = I>,
+    $( $ft: Fn(I) -> ParserFnResult<P, R>, )*
     {
     move |$stream| { $($content)* }
 } // pub fn
 
-pub fn [< $fn_name _else >] <'a, P, I: ParserFnInput<'a, P>, R, $($ft, )* G>(
+pub fn [< $fn_name _else >] <P, I: ParserFnInput<P>, R, $($ft, )* G>(
     $( $f : $ft , )*
     g : G,
-) -> impl Fn(I) -> ParserFnResult<'a, P, R>
+) -> impl Fn(I) -> ParserFnResult<P, R>
 where
-    P: Parser<'a, Input = I>,
-    G : Fn() -> <P as Parser<'a>>::Error,
-    $( $ft: Fn(I) -> ParserFnResult<'a, P, R>, )*
+    P: Parser<Input = I>,
+    G : Fn() -> <P as Parser>::Error,
+    $( $ft: Fn(I) -> ParserFnResult<P, R>, )*
     {
     move |$stream|
         match ( { $($content)* } )? {
@@ -112,28 +110,28 @@ where
         }
 } // pub fn
 
-pub fn [< $fn_name _ref>] <'a, 'b, P, I: ParserFnInput<'a, P>, R, $($ft, )*>(
+pub fn [< $fn_name _ref>] <'b, P, I: ParserFnInput<P>, R, $($ft, )*>(
     $( $f : &'b $ft , )*
-) -> impl Fn(I) -> ParserFnResult<'a, P, R> + 'b
+) -> impl Fn(I) -> ParserFnResult<P, R> + 'b
 where
-    P: Parser<'a, Input = I>,
-    'a: 'b,
-    $( $ft: Fn(I) -> ParserFnResult<'a, P, R> +'b, )*
+    P: Parser<Input = I>,
+    $( $ft: Fn(I) -> ParserFnResult<P, R> +'b, )*
     {
     move |$stream| { $($content)* }
 } // pub fn
 
-pub fn [< $fn_name _dyn_ref>] <'a, 'b, P, I: ParserFnInput<'a, P>, R>(
-    $( $f : &'b (dyn Fn(I) -> ParserFnResult<'a, P, R> +'b) , )*
-) -> impl Fn(I) -> ParserFnResult<'a, P, R> + 'b
+pub fn [< $fn_name _dyn_ref>] <'b, P, I: ParserFnInput<P>, R>(
+    $( $f : &'b (dyn Fn(I) -> ParserFnResult<P, R> +'b) , )*
+) -> impl Fn(I) -> ParserFnResult<P, R> + 'b
 where
-    P: Parser<'a, Input = I>,
-    'a: 'b,
+        P: Parser<Input = I>,
     {
     move |$stream| { $($content)* }
-} // pub fn
+}
+
+}
     }
-    }}
+}
 
 //mi many_f_many_r
 /// Macro to allow multiple functions with the individual return types
@@ -144,40 +142,39 @@ macro_rules! many_f_many_r {
       { $($content:tt)* }
     ) => {
 paste! {
-pub fn $fn_name<'a, P, I: ParserFnInput<'a, P>, $($rt,)* $($ft, )*>(
+pub fn $fn_name<P, I: ParserFnInput<P>, $($rt,)* $($ft, )*>(
     $( $f : $ft , )*
-) -> impl Fn(I) -> ParserFnResult<'a, P, $r >
+) -> impl Fn(I) -> ParserFnResult<P, $r >
 where
-    P: Parser<'a, Input = I>,
-    $( $ft: Fn(I) -> ParserFnResult<'a, P, $rt>, )*
+    P: Parser<Input = I>,
+    $( $ft: Fn(I) -> ParserFnResult<P, $rt>, )*
         { $($content)* }
 
-pub fn [<$fn_name _ref>]<'a, 'b, P, I: ParserFnInput<'a, P>, $($rt,)* $($ft, )*>(
+pub fn [<$fn_name _ref>] <'b, P, I: ParserFnInput<P>, $($rt,)* $($ft, )*>(
     $( $f : &'b $ft , )*
-) -> impl Fn(I) -> ParserFnResult<'a, P, $r> + 'b
+) -> impl Fn(I) -> ParserFnResult<P, $r> + 'b
 where
-    P: Parser<'a, Input = I>,
-    'a: 'b,
-    $( $ft: Fn(I) -> ParserFnResult<'a, P, $rt> +'b, )*
+    P: Parser<Input = I>,
+    $( $ft: Fn(I) -> ParserFnResult<P, $rt> +'b, )*
         { $($content)* }
     }
     }
 }
 
 //a Success and fail
-pub fn success<'a, P, I: ParserFnInput<'a, P>, R:Copy>(result:R
-) -> impl Fn(I) -> ParserFnResult<'a, P, R>
+pub fn success<P, I: ParserFnInput<P>, R:Copy>(result:R
+) -> impl Fn(I) -> ParserFnResult<P, R>
 where
-    P: Parser<'a, Input = I>,
+    P: Parser<Input = I>,
 {
     use ParserResult::*;
     move |stream| {
         Ok(Matched(stream, result))
     }
 }
-pub fn fail<'a, P, I: ParserFnInput<'a, P>, R>(_unused:R) -> impl Fn(I) -> ParserFnResult<'a, P, R>
+pub fn fail<P, I: ParserFnInput<P>, R>(_unused:R) -> impl Fn(I) -> ParserFnResult<P, R>
 where
-    P: Parser<'a, Input = I>,
+    P: Parser<Input = I>,
 {
     use ParserResult::*;
     move |stream| {
@@ -193,11 +190,11 @@ where
 ///
 /// Use cases might be to convert a 'clocked' or 'comb' token to an
 /// internal enumeration for a signal type
-pub fn map_token<'a, P, I: ParserFnInput<'a, P>, R, F>(
+pub fn map_token<P, I: ParserFnInput<P>, R, F>(
     f: F,
-) -> impl Fn(I) -> ParserFnResult<'a, P, R>
+) -> impl Fn(I) -> ParserFnResult<P, R>
 where
-    P: Parser<'a, Input = I>,
+    P: Parser<Input = I>,
     F: Fn(P::Token) -> Option<R>,
 {
     use ParserResult::*;
@@ -223,12 +220,12 @@ where
 /// function does not match; if it is more than 'min' then the match
 /// is of Matched with result n
 ///
-pub fn match_count<'a, P, I: ParserFnInput<'a, P>, F>(
+pub fn match_count<P, I: ParserFnInput<P>, F>(
     f: F,
     range: Range<usize>,
-) -> impl Fn(I) -> ParserFnResult<'a, P, usize>
+) -> impl Fn(I) -> ParserFnResult<P, usize>
 where
-    P: Parser<'a, Input = I>,
+    P: Parser<Input = I>,
     F: Fn(P::Token) -> bool,
 {
     use ParserResult::*;

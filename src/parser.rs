@@ -18,18 +18,18 @@ use crate::lexer::{TextPos, TokenTypeError};
 /// down that path requires a lot more turbofish on parser_fn
 /// invocations to specifiy the Parser itself, which is an
 /// anti-pattern.
-pub trait Parser<'a>: Sized {
-    type Token; // : 'a;
+pub trait Parser: Sized {
+    type Token;
     type Pos: TextPos;
-    type Error: TokenTypeError<Self::Pos>; // + 'a;
-    type Input: ParserFnInput<'a, Self>; // + 'a;
+    type Error: TokenTypeError<Self::Pos>;
+    type Input: ParserFnInput<Self>;
 }
 
 //tp ParserInputResult
 ///
-/// P:Parser<'a>
-pub type ParserInputResult<'a, P> =
-    Result<Option<(<P as Parser<'a>>::Input, <P as Parser<'a>>::Token)>, <P as Parser<'a>>::Error>;
+/// P:Parser
+pub type ParserInputResult<P> =
+    Result<Option<(<P as Parser>::Input, <P as Parser>::Token)>, <P as Parser>::Error>;
 
 //tt ParserFnInput
 /// Trait required by a parser of its input
@@ -41,20 +41,20 @@ pub type ParserInputResult<'a, P> =
 ///
 /// Requiring Copy here allows parser functions to manipulate the
 /// input simply without explicit cloning
-pub trait ParserFnInput<'a, P: Parser<'a, Input = Self>>: Copy {
-    fn get_token(&self) -> ParserInputResult<'a, P>;
+pub trait ParserFnInput<P: Parser<Input = Self>>: Copy {
+    fn get_token(&self) -> ParserInputResult<P>;
 }
 
 //tp ParserResult
 #[derive(Debug)]
-pub enum ParserResult<'a, P: Parser<'a>, R> {
+pub enum ParserResult<P: Parser, R> {
     Mismatched,
     Matched(P::Input, R),
 }
 
 //tp ParserFnResult
 // P:Parser<'a, Error = E>
-pub type ParserFnResult<'a, P, R> = Result<ParserResult<'a, P, R>, <P as Parser<'a>>::Error>;
+pub type ParserFnResult<P, R> = Result<ParserResult<P, R>, <P as Parser>::Error>;
 
 /*
 struct ParserFnResultv2<'a, P: Parser<'a>, R>(ParserFnResult<'a, P, R>);

@@ -7,16 +7,16 @@ pub mod parser_fn;
 pub use crate::lexer::{LineCol, Pos, Span, TextPos};
 pub use crate::lexer::{SimpleKeyword, SimpleToken};
 pub use crate::lexer::{
-    TextStream, TextStreamSpan, TextStreamSpanIterator, TokenParseError, TokenParseResult,
+    TextStreamSpan, TextStreamSpanIterator, TokenParseError, TokenParseResult,
     TokenParser, TokenType, TokenTypeError,
 };
 pub use parser::{Parser, ParserFnInput, ParserFnResult, ParserInputResult, ParserResult};
 
+//a Tests
 #[test]
 fn test_me() {
     let a = r##"let add x y = x + y; add 2 3
 "##;
-    let stream = TextStream::new(a);
 
     type P = u8;
     type K = u64;
@@ -24,7 +24,7 @@ fn test_me() {
     type Token = SimpleToken<P, K>;
     type E = TokenParseError<P>;
 
-    let span: TSSpan = stream.as_span();
+    let span = TSSpan::new(a);
     // Note must use closures here as Rust cannot resolve the lifetimes of the functions otherwise
     let parse_whitespace = |c, b, s| Token::parse_whitespace(c, b, s);
     fn parse_keywords(c: char, b: usize, s: TSSpan) -> TokenParseResult<P, Token, E> {
