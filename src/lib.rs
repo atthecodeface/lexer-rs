@@ -7,8 +7,8 @@ pub mod parser_fn;
 pub use crate::lexer::{LineCol, Pos, Span, TextPos};
 pub use crate::lexer::{SimpleKeyword, SimpleToken};
 pub use crate::lexer::{
-    TextStreamSpan, TextStreamSpanIterator, TokenParseError, TokenParseResult,
-    TokenParser, TokenType, TokenTypeError,
+    TextStreamSpan, TextStreamSpanIterator, TokenParseError, TokenParseResult, TokenParser,
+    TokenType, TokenTypeError,
 };
 pub use parser::{Parser, ParserFnInput, ParserFnResult, ParserInputResult, ParserResult};
 

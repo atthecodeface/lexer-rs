@@ -11,7 +11,7 @@ use crate::{Parser, ParserFnInput, ParserFnResult, ParserResult};
 // e.g. value_of_first_2( (parser_a, 0), (parser_b, 1) )
 // Map
 // e.g. map( parser, fn |x| Thing::Fred(x) )
-// 
+//
 // e.g. map( parser, fn |x| Thing::Fred(x) )
 //
 // opt (matched(x) -> matched(Some(x)), mismatch -> Matched(none))
@@ -34,7 +34,12 @@ use crate::{Parser, ParserFnInput, ParserFnResult, ParserResult};
 
 //a Macros
 //mi one_f_one_r
-/// Macro to allow multiple functions with the same return type
+// Macro to allow multiple functions with the same return type in a slice
+//
+// Produces:
+//   *  <fn>_dyn_ref([&dyn Fn() -> ParserFnResult<R>]) -> impl ParserFn<P, R>
+//   *  <fn>_dyn_ref_else([&dyn Fn() -> ParserFnResult<R>], Fn()-> Error) -> impl ParserFn<P, R>
+//
 macro_rules! one_f_one_r_slice {
     ( $fn_name:ident,
       $fs:ident,
@@ -42,25 +47,25 @@ macro_rules! one_f_one_r_slice {
       { $($content:tt)* }
     ) => {
 
-paste! {
+        paste! {
 
 pub fn [<$fn_name _dyn_ref>] <'b, P, I: ParserFnInput<P>, R, const N : usize>(
     $fs: [ &'b (dyn Fn(I) -> ParserFnResult<P, R> +'b) ; N]
-) -> impl Fn(I) -> ParserFnResult<P, R> + 'b
-where
-    P: Parser<Input = I>,
-    {
+    ) -> impl Fn(I) -> ParserFnResult<P, R> + 'b
+    where
+        P: Parser<Input = I>,
+{
     move |$stream| { $($content)* }
 } // pub fn
 
 pub fn [<$fn_name _dyn_ref_else>] <'b, P, I: ParserFnInput<P>, R, G, const N : usize>(
     $fs: [ &'b (dyn Fn(I) -> ParserFnResult<P, R> +'b) ; N],
     g : G,
-) -> impl Fn(I) -> ParserFnResult<P, R> + 'b
-where
+    ) -> impl Fn(I) -> ParserFnResult<P, R> + 'b
+    where
         P: Parser<Input = I>,
-    G : Fn() -> <P as Parser>::Error + 'b,
-    {
+        G : Fn() -> <P as Parser>::Error + 'b,
+{
     move |$stream| {
         match ( { $($content)* } )? {
             ParserResult::Mismatched => {
@@ -70,37 +75,49 @@ where
         }
     }
 } // pub fn
-} // paste
+
+        } // paste
     }} // macro_rules
 
 //mi many_f_one_r
-/// Macro to allow multiple functions with the same return type
+// Macro to allow multiple functions with the same return type individually
+//
+// Produces:
+//   *  <fn>(f1:F1, f2:F2, ...) -> impl ParserFn<P, R>
+//   *  <fn>_else(f1:F1, f2:F2, ..., Fn()-> Error) -> impl ParserFn<P, R>
+//   *  <fn>_ref(f1:&F1, f2:&F2, ...) -> impl ParserFn<P, R>
+//   *  <fn>_ref_else(f1:&F1, f2:&F2, ..., Fn()-> Error) -> impl ParserFn<P, R>
+//   *  <fn>_dyn_ref(f1:&dyn F1, f2:&dyn F2, ...) -> impl ParserFn<P, R>
+//   *  <fn>_dyn_ref_else(f1:&dyn F1, f2:&dyn F2, ..., Fn()-> Error) -> impl ParserFn<P, R>
+//
 macro_rules! many_f_one_r {
     ( $fn_name:ident,
       ( $($f:ident : $ft:ident  , )+  $(,)? )
       $stream : ident
       { $($content:tt)* }
     ) => {
-paste! {
+
+        paste! {
+
 pub fn $fn_name<P, I: ParserFnInput<P>, R, $($ft, )*>(
     $( $f : $ft , )*
-) -> impl Fn(I) -> ParserFnResult<P, R>
-where
-    P: Parser<Input = I>,
-    $( $ft: Fn(I) -> ParserFnResult<P, R>, )*
-    {
+    ) -> impl Fn(I) -> ParserFnResult<P, R>
+    where
+        P: Parser<Input = I>,
+        $( $ft: Fn(I) -> ParserFnResult<P, R>, )*
+{
     move |$stream| { $($content)* }
 } // pub fn
 
 pub fn [< $fn_name _else >] <P, I: ParserFnInput<P>, R, $($ft, )* G>(
     $( $f : $ft , )*
     g : G,
-) -> impl Fn(I) -> ParserFnResult<P, R>
-where
-    P: Parser<Input = I>,
-    G : Fn() -> <P as Parser>::Error,
-    $( $ft: Fn(I) -> ParserFnResult<P, R>, )*
-    {
+    ) -> impl Fn(I) -> ParserFnResult<P, R>
+    where
+        P: Parser<Input = I>,
+        G : Fn() -> <P as Parser>::Error,
+        $( $ft: Fn(I) -> ParserFnResult<P, R>, )*
+{
     move |$stream|
         match ( { $($content)* } )? {
             ParserResult::Mismatched => {
@@ -112,42 +129,87 @@ where
 
 pub fn [< $fn_name _ref>] <'b, P, I: ParserFnInput<P>, R, $($ft, )*>(
     $( $f : &'b $ft , )*
-) -> impl Fn(I) -> ParserFnResult<P, R> + 'b
-where
-    P: Parser<Input = I>,
-    $( $ft: Fn(I) -> ParserFnResult<P, R> +'b, )*
-    {
+    ) -> impl Fn(I) -> ParserFnResult<P, R> + 'b
+            where
+                P: Parser<Input = I>,
+            $( $ft: Fn(I) -> ParserFnResult<P, R> +'b, )*
+{
     move |$stream| { $($content)* }
+} // pub fn
+
+pub fn [< $fn_name _ref_else>] <'b, P, I: ParserFnInput<P>, R, $($ft, )* G>(
+    $( $f : &'b $ft , )*
+    g : G,
+    ) -> impl Fn(I) -> ParserFnResult<P, R> + 'b
+    where
+        P: Parser<Input = I>,
+        G : Fn() -> <P as Parser>::Error + 'b,
+        $( $ft: Fn(I) -> ParserFnResult<P, R> +'b, )*
+{
+    move |$stream|
+        match ( { $($content)* } )? {
+            ParserResult::Mismatched => {
+                Err(g())
+            }
+            x => Ok(x),
+        }
 } // pub fn
 
 pub fn [< $fn_name _dyn_ref>] <'b, P, I: ParserFnInput<P>, R>(
     $( $f : &'b (dyn Fn(I) -> ParserFnResult<P, R> +'b) , )*
-) -> impl Fn(I) -> ParserFnResult<P, R> + 'b
-where
+    ) -> impl Fn(I) -> ParserFnResult<P, R> + 'b
+    where
         P: Parser<Input = I>,
-    {
+{
     move |$stream| { $($content)* }
-}
+} // pub fn
 
-}
-    }
-}
+pub fn [< $fn_name _dyn_ref_else>] <'b, P, I: ParserFnInput<P>, R, G>(
+    $( $f : &'b (dyn Fn(I) -> ParserFnResult<P, R> +'b) , )*
+    g: G,
+    ) -> impl Fn(I) -> ParserFnResult<P, R> + 'b
+    where
+        P: Parser<Input = I>,
+        G : Fn() -> <P as Parser>::Error + 'b,
+{
+    move |$stream|
+        match ( { $($content)* } )? {
+            ParserResult::Mismatched => {
+                Err(g())
+            }
+            x => Ok(x),
+        }
+} // pub fn
+
+        } // paste
+    }} // macro_rules
 
 //mi many_f_many_r
-/// Macro to allow multiple functions with the individual return types
+// Macro to allow multiple functions with the individual return types
+//
+// Produces:
+//   *  <fn>(f1:F1, f2:F2, ...) -> impl ParserFn<P, R>
+//   *  <fn>_else(f1:F1, f2:F2, ..., Fn()-> Error) -> impl ParserFn<P, R>
+//   *  <fn>_ref(f1:&F1, f2:&F2, ...) -> impl ParserFn<P, R>
+//   *  <fn>_ref_else(f1:&F1, f2:&F2, ..., Fn()-> Error) -> impl ParserFn<P, R>
+//   *  <fn>_dyn_ref(f1:&dyn F1, f2:&dyn F2, ...) -> impl ParserFn<P, R>
+//   *  <fn>_dyn_ref_else(f1:&dyn F1, f2:&dyn F2, ..., Fn()-> Error) -> impl ParserFn<P, R>
+//
 macro_rules! many_f_many_r {
     ( $fn_name:ident,
       ( $($f:ident : $ft:ident : $rt:ident),+  $(,)? ),
       $r:ty,
       { $($content:tt)* }
     ) => {
-paste! {
+
+        paste! {
+
 pub fn $fn_name<P, I: ParserFnInput<P>, $($rt,)* $($ft, )*>(
     $( $f : $ft , )*
-) -> impl Fn(I) -> ParserFnResult<P, $r >
-where
-    P: Parser<Input = I>,
-    $( $ft: Fn(I) -> ParserFnResult<P, $rt>, )*
+    ) -> impl Fn(I) -> ParserFnResult<P, $r >
+    where
+        P: Parser<Input = I>,
+        $( $ft: Fn(I) -> ParserFnResult<P, $rt>, )*
         { $($content)* }
 
 pub fn [<$fn_name _ref>] <'b, P, I: ParserFnInput<P>, $($rt,)* $($ft, )*>(
@@ -162,24 +224,19 @@ where
 }
 
 //a Success and fail
-pub fn success<P, I: ParserFnInput<P>, R:Copy>(result:R
-) -> impl Fn(I) -> ParserFnResult<P, R>
+pub fn success<P, I: ParserFnInput<P>, R: Copy>(result: R) -> impl Fn(I) -> ParserFnResult<P, R>
 where
     P: Parser<Input = I>,
 {
     use ParserResult::*;
-    move |stream| {
-        Ok(Matched(stream, result))
-    }
+    move |stream| Ok(Matched(stream, result))
 }
-pub fn fail<P, I: ParserFnInput<P>, R>(_unused:R) -> impl Fn(I) -> ParserFnResult<P, R>
+pub fn fail<P, I: ParserFnInput<P>, R>(_unused: R) -> impl Fn(I) -> ParserFnResult<P, R>
 where
     P: Parser<Input = I>,
 {
     use ParserResult::*;
-    move |stream| {
-        Ok(Mismatched)
-    }
+    move |stream| Ok(Mismatched)
 }
 
 //a map_token
@@ -190,9 +247,7 @@ where
 ///
 /// Use cases might be to convert a 'clocked' or 'comb' token to an
 /// internal enumeration for a signal type
-pub fn map_token<P, I: ParserFnInput<P>, R, F>(
-    f: F,
-) -> impl Fn(I) -> ParserFnResult<P, R>
+pub fn map_token<P, I: ParserFnInput<P>, R, F>(f: F) -> impl Fn(I) -> ParserFnResult<P, R>
 where
     P: Parser<Input = I>,
     F: Fn(P::Token) -> Option<R>,

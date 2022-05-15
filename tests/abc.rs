@@ -76,7 +76,7 @@ impl<'a> AbcTokenStream<'a> {
 }
 
 //ip ParserFnInput for AbcTokenStream
-impl <'a> ParserFnInput<AbcTokenStream<'a>> for AbcTokenStream<'a> {
+impl<'a> ParserFnInput<AbcTokenStream<'a>> for AbcTokenStream<'a> {
     //
     fn get_token(&self) -> Result<Option<(Self, char)>, AbcTokenStreamError> {
         Ok(self
@@ -116,7 +116,8 @@ impl <'a> ParserFnInput<AbcTokenStream<'a>> for AbcTokenStream<'a> {
 /// then the caller must handle the safety. Perhaps a wrapping
 /// structure that contains the input stream *and* the parsed results
 /// would be sufficient?
-type AbcParserFn<'parser, R> = dyn Fn(AbcTokenStream<'static>) -> ParserFnResult<AbcTokenStream<'static>, R> + 'parser;
+type AbcParserFn<'parser, R> =
+    dyn Fn(AbcTokenStream<'static>) -> ParserFnResult<AbcTokenStream<'static>, R> + 'parser;
 struct AbcParser<'parser> {
     at_least_one_a: Box<AbcParserFn<'parser, usize>>,
     some_bs: Box<AbcParserFn<'parser, usize>>,
@@ -124,12 +125,14 @@ struct AbcParser<'parser> {
     grammar1: Box<AbcParserFn<'parser, (usize, usize, usize)>>,
     grammar2: Box<AbcParserFn<'parser, (usize, usize, usize)>>,
     either_grammar: Box<AbcParserFn<'parser, (usize, usize, usize)>>,
-    _pin : std::marker::PhantomPinned,
+    _pin: std::marker::PhantomPinned,
 }
 macro_rules! abc_pref {
     ($R:ty, $p:ident, $e:ident, $l:lifetime) => {
-        unsafe {std::mem::transmute::<&Box<AbcParserFn<$l, $R>>, &Box<AbcParserFn<'_, $R>>>(& $p . $e)}
-    }
+        unsafe {
+            std::mem::transmute::<&Box<AbcParserFn<$l, $R>>, &Box<AbcParserFn<'_, $R>>>(&$p.$e)
+        }
+    };
 }
 macro_rules! abc_pset {
     ($p:ident, $e:ident, $f:tt) => {
@@ -137,9 +140,9 @@ macro_rules! abc_pset {
         unsafe {
             std::pin::Pin::get_unchecked_mut(mut_p).$e = Box::new($f);
         }
-    }
+    };
 }
-impl <'parser> AbcParser<'parser> {
+impl<'parser> AbcParser<'parser> {
     fn new() -> std::pin::Pin<Box<Self>> {
         let at_least_one_a = Box::new(parser_fn::match_count(|t| (t == 'a'), 1..1000));
         let some_bs = Box::new(parser_fn::match_count(|t| (t == 'b'), 0..1000));
@@ -154,20 +157,34 @@ impl <'parser> AbcParser<'parser> {
             grammar1,
             grammar2,
             either_grammar,
-            _pin : std::marker::PhantomPinned,
+            _pin: std::marker::PhantomPinned,
         });
         let at_least_one_a = abc_pref!(usize, parser, at_least_one_a, 'parser);
         let at_least_one_c = abc_pref!(usize, parser, at_least_one_c, 'parser);
-        let some_bs        = abc_pref!(usize, parser, some_bs, 'parser);
-        abc_pset!(parser, grammar1, (parser_fn::tuple3_ref(at_least_one_a, some_bs, at_least_one_c)) );
-        abc_pset!(parser, grammar2, (parser_fn::tuple3_ref(at_least_one_c, some_bs, at_least_one_a)) );
+        let some_bs = abc_pref!(usize, parser, some_bs, 'parser);
+        abc_pset!(
+            parser,
+            grammar1,
+            (parser_fn::tuple3_ref(at_least_one_a, some_bs, at_least_one_c))
+        );
+        abc_pset!(
+            parser,
+            grammar2,
+            (parser_fn::tuple3_ref(at_least_one_c, some_bs, at_least_one_a))
+        );
         let grammar1 = abc_pref!((usize, usize, usize), parser, grammar1, 'parser);
         let grammar2 = abc_pref!((usize, usize, usize), parser, grammar1, 'parser);
-        abc_pset!(parser, either_grammar, (parser_fn::first_of_n_dyn_ref_else([grammar1, grammar2], || {AbcTokenStreamError::Other("Matched neither grammar".to_string())} )));
+        abc_pset!(
+            parser,
+            either_grammar,
+            (parser_fn::first_of_n_dyn_ref_else([grammar1, grammar2], || {
+                AbcTokenStreamError::Other("Matched neither grammar".to_string())
+            }))
+        );
         parser
     }
-    fn do_test(&self, s:&str) {
-        let ps = unsafe {std::mem::transmute::<&str, &'static str>(s)};
+    fn do_test(&self, s: &str) {
+        let ps = unsafe { std::mem::transmute::<&str, &'static str>(s) };
         let stream = TextStreamSpan::new(ps);
         let abcs = AbcTokenStream { stream };
 
@@ -179,7 +196,7 @@ impl <'parser> AbcParser<'parser> {
     }
 }
 
-fn do_test(abc_parser:&AbcParser, s:&str) {
+fn do_test(abc_parser: &AbcParser, s: &str) {
     abc_parser.do_test(s);
 }
 
