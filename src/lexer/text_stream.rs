@@ -148,7 +148,7 @@ where
     ///
     /// Safety : The Span has been provided by a parser and so the
     /// byte offsets are indeed utf8 character boundaries
-    pub fn get_text(&self, span: Span<P>) -> &str {
+    pub fn get_text(&self) -> &str {
         unsafe { self.get_text_of_range(self.pos.byte_ofs()..self.end) }
     }
 

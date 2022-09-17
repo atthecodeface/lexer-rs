@@ -23,11 +23,12 @@ impl std::fmt::Display for Pos {
 //tp AbcTokenStreamError
 #[derive(Debug)]
 enum AbcTokenStreamError {
+    #[allow(dead_code)]
     Token(TokenParseError<Pos>),
     Other(String),
 }
 impl std::fmt::Display for AbcTokenStreamError {
-    fn fmt(&self, fmt: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
+    fn fmt(&self, _fmt: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
         todo!()
     }
 }
@@ -135,7 +136,7 @@ macro_rules! abc_pref {
     };
 }
 macro_rules! abc_pset {
-    ($p:ident, $e:ident, $f:tt) => {
+    ($p:ident, $e:ident, $f:expr) => {
         let mut_p = std::pin::Pin::as_mut(&mut $p);
         unsafe {
             std::pin::Pin::get_unchecked_mut(mut_p).$e = Box::new($f);
@@ -144,9 +145,9 @@ macro_rules! abc_pset {
 }
 impl<'parser> AbcParser<'parser> {
     fn new() -> std::pin::Pin<Box<Self>> {
-        let at_least_one_a = Box::new(parser_fn::match_count(|t| (t == 'a'), 1..1000));
-        let some_bs = Box::new(parser_fn::match_count(|t| (t == 'b'), 0..1000));
-        let at_least_one_c = Box::new(parser_fn::match_count(|t| (t == 'c'), 1..1000));
+        let at_least_one_a = Box::new(parser_fn::count_of(|t| (t == 'a'), 1..1000));
+        let some_bs = Box::new(parser_fn::count_of(|t| (t == 'b'), 0..1000));
+        let at_least_one_c = Box::new(parser_fn::count_of(|t| (t == 'c'), 1..1000));
         let grammar1 = Box::new(parser_fn::success((0_usize, 0_usize, 0_usize)));
         let grammar2 = Box::new(parser_fn::success((0_usize, 0_usize, 0_usize)));
         let either_grammar = Box::new(parser_fn::success((0_usize, 0_usize, 0_usize)));
@@ -165,21 +166,21 @@ impl<'parser> AbcParser<'parser> {
         abc_pset!(
             parser,
             grammar1,
-            (parser_fn::tuple3_ref(at_least_one_a, some_bs, at_least_one_c))
+            parser_fn::tuple3_ref(at_least_one_a, some_bs, at_least_one_c)
         );
         abc_pset!(
             parser,
             grammar2,
-            (parser_fn::tuple3_ref(at_least_one_c, some_bs, at_least_one_a))
+            parser_fn::tuple3_ref(at_least_one_c, some_bs, at_least_one_a)
         );
         let grammar1 = abc_pref!((usize, usize, usize), parser, grammar1, 'parser);
         let grammar2 = abc_pref!((usize, usize, usize), parser, grammar1, 'parser);
         abc_pset!(
             parser,
             either_grammar,
-            (parser_fn::first_of_n_dyn_ref_else([grammar1, grammar2], || {
+            parser_fn::first_of_n_dyn_ref_else([grammar1, grammar2], || {
                 AbcTokenStreamError::Other("Matched neither grammar".to_string())
-            }))
+            })
         );
         parser
     }

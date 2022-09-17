@@ -1,6 +1,3 @@
-//a Imports
-use crate::lexer::{TextPos, TokenTypeError};
-
 //a ParserInput, ParserInputResult, ParserInputStream
 //tt ParserInput
 /// A parser defined using associated types
