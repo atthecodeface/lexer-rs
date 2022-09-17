@@ -1,6 +1,6 @@
 //a Imports
 use lexer::parser_fn;
-use lexer::{Parser, ParserFnInput, ParserFnResult};
+use lexer::{ParserInput, ParserInputStream, ParseFnResult};
 use lexer::{TextPos, TextStreamSpan};
 use lexer::{TokenParseError, TokenTypeError};
 
@@ -50,12 +50,12 @@ struct AbcTokenStream<'a> {
     stream: TextStreamSpan<'a, Pos>,
 }
 
-//ip Parser for AbcTokenStream
-impl<'a> Parser for AbcTokenStream<'a> {
+//ip ParserInput for AbcTokenStream
+impl<'a> ParserInput for AbcTokenStream<'a> {
     type Token = char;
 //    type Pos = Pos;
     type Error = AbcTokenStreamError;
-    type Input = AbcTokenStream<'a>;
+    type Stream = AbcTokenStream<'a>;
 }
 
 //ip AbcTokenStream
@@ -75,8 +75,8 @@ impl<'a> AbcTokenStream<'a> {
     }
 }
 
-//ip ParserFnInput for AbcTokenStream
-impl<'a> ParserFnInput<AbcTokenStream<'a>> for AbcTokenStream<'a> {
+//ip ParserInput for AbcTokenStream
+impl<'a> ParserInputStream<AbcTokenStream<'a>> for AbcTokenStream<'a> {
     //
     fn get_token(&self) -> Result<Option<(Self, char)>, AbcTokenStreamError> {
         Ok(self
@@ -109,28 +109,28 @@ impl<'a> ParserFnInput<AbcTokenStream<'a>> for AbcTokenStream<'a> {
 /// Hence a parse should be wrapped in a borrow of the parser with a
 /// borrow of the text to be parsed; parsing can then take place, and
 /// results of the parse used, and (provided the parse results do not
-/// use the input stream borrow) the results can the be retured and
+/// use the input stream borrow) the results can the be returned and
 /// the operation will be clean.
 ///
 /// If the parse results are to require a borrow of the text stream
 /// then the caller must handle the safety. Perhaps a wrapping
 /// structure that contains the input stream *and* the parsed results
 /// would be sufficient?
-type AbcParserFn<'parser, R> =
-    dyn Fn(AbcTokenStream<'static>) -> ParserFnResult<AbcTokenStream<'static>, R> + 'parser;
+type AbcParserFn<'parser, 'stream, R> =
+    dyn Fn(AbcTokenStream<'stream>) -> ParseFnResult<AbcTokenStream<'stream>, R> + 'parser;
 struct AbcParser<'parser> {
-    at_least_one_a: Box<AbcParserFn<'parser, usize>>,
-    some_bs: Box<AbcParserFn<'parser, usize>>,
-    at_least_one_c: Box<AbcParserFn<'parser, usize>>,
-    grammar1: Box<AbcParserFn<'parser, (usize, usize, usize)>>,
-    grammar2: Box<AbcParserFn<'parser, (usize, usize, usize)>>,
-    either_grammar: Box<AbcParserFn<'parser, (usize, usize, usize)>>,
+    at_least_one_a: Box<AbcParserFn<'parser, 'static, usize>>,
+    some_bs: Box<AbcParserFn<'parser, 'static, usize>>,
+    at_least_one_c: Box<AbcParserFn<'parser, 'static, usize>>,
+    grammar1: Box<AbcParserFn<'parser, 'static, (usize, usize, usize)>>,
+    grammar2: Box<AbcParserFn<'parser, 'static, (usize, usize, usize)>>,
+    either_grammar: Box<AbcParserFn<'parser, 'static, (usize, usize, usize)>>,
     _pin: std::marker::PhantomPinned,
 }
 macro_rules! abc_pref {
     ($R:ty, $p:ident, $e:ident, $l:lifetime) => {
         unsafe {
-            std::mem::transmute::<&Box<AbcParserFn<$l, $R>>, &Box<AbcParserFn<'_, $R>>>(&$p.$e)
+            std::mem::transmute::<&Box<AbcParserFn<$l, 'static, $R>>, &Box<AbcParserFn<'_, 'static, $R>>>(&$p.$e)
         }
     };
 }
