@@ -62,6 +62,9 @@ impl<P> Pos<P>
 where
     P: TextPos,
 {
+    pub fn pos(&self) -> P {
+        self.pos
+    }
     pub fn advance_cols(mut self, byte_ofs: usize, num_chars: usize) -> Self {
         self.byte_ofs = byte_ofs;
         self.pos.advance_cols(num_chars);

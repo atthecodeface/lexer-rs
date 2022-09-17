@@ -213,5 +213,5 @@ fn test_me() {
         do_test(&abc_parser, "cba");
         do_test(&abc_parser, &format!("cba"));
     }
-    assert!(false);
+    // assert!(false);
 }

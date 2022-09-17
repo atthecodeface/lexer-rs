@@ -33,12 +33,11 @@ pub trait ParserInput: Sized {
     /// token
     ///
     ///
-    type Error; // : TokenTypeError<Self::Pos>;
+    type Error;
 
     /// The input type that provides the 'get_token' function to
     /// attempt to provide the next token for a parser to try to
-    /// consume.  This type must support Clone as cheaply as possible,
-    /// ideally it should be Copy. This is because the parser must
+    /// consume.  This type must support Copy as the parser must
     /// keep copies of the input state so that it can backtrack on
     /// parsing failures.
     type Stream: ParserInputStream<Self>;

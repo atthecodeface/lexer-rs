@@ -1,5 +1,5 @@
 //a Imports
-use super::ParserInput;
+use crate::ParserInput;
 
 //a ParseResult, ParseFnResult
 //tp ParseResult

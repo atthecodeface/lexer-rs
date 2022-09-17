@@ -231,7 +231,7 @@ where
         self
     }
 
-    //mp count_matching
+    //mp do_while
     pub fn do_while<F: Fn(usize, char) -> bool>(
         mut self,
         ch: char,
