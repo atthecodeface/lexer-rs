@@ -1,5 +1,5 @@
 //a Imports
-use crate::{ParserInput, ParserInputStream, ParseFnResult, ParseResult};
+use crate::{ParseFnResult, ParseResult, ParserInput, ParserInputStream};
 
 //a Pair / tuples
 //fp pair

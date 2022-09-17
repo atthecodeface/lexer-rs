@@ -10,8 +10,8 @@ pub use crate::lexer::{
     TextStreamSpan, TextStreamSpanIterator, TokenParseError, TokenParseResult, TokenParser,
     TokenType, TokenTypeError,
 };
-pub use parser::{ParserInput, ParserInputStream, ParserInputResult};
 pub use parser::{ParseFnResult, ParseResult};
+pub use parser::{ParserInput, ParserInputResult, ParserInputStream};
 
 //a Tests
 #[test]

@@ -1,20 +1,20 @@
 //a Imports
-use crate::{ParserInput, ParserInputStream, ParseFnResult, ParseResult};
+use crate::{ParseFnResult, ParseResult, ParserInput, ParserInputStream};
 
 #[macro_use]
 mod macros;
 
 mod comb;
+pub use comb::{delimited, delimited_ref};
 pub use comb::{pair, pair_ref};
+pub use comb::{preceded, preceded_ref};
+pub use comb::{separated_pair, separated_pair_ref};
+pub use comb::{succeeded, succeeded_ref};
 pub use comb::{tuple3, tuple3_ref};
 pub use comb::{tuple4, tuple4_ref};
-pub use comb::{preceded, preceded_ref};
-pub use comb::{succeeded, succeeded_ref};
-pub use comb::{delimited, delimited_ref};
-pub use comb::{separated_pair, separated_pair_ref};
 
 mod immediate;
-pub use immediate::{success, fail, error};
+pub use immediate::{error, fail, success};
 
 mod r#match;
 pub use r#match::{count_of, list_of};
@@ -123,4 +123,3 @@ use ParseResult::*;
     }
 }
     }
-

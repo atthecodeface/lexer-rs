@@ -1,7 +1,7 @@
 //a Imports
 use std::ops::Range;
 
-use crate::{ParserInput, ParserInputStream, ParseFnResult, ParseResult};
+use crate::{ParseFnResult, ParseResult, ParserInput, ParserInputStream};
 
 //a count
 //fp count_of
@@ -86,4 +86,3 @@ where
         }
     }
 }
-

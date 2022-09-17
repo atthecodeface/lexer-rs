@@ -26,13 +26,13 @@ pub trait ParserInput: Sized {
     /// Using the lexer the Error type will often be:
     ///
     ///    Error : lexer::TokenTypeError<Pos : lexer::TextPos>
-    /// 
+    ///
     /// Pos is the type of a position in an input that needs to be
     /// reported for errors, or that is traced within the Tokens;
     /// often this is the file and start/end lines/characters of the
     /// token
     ///
-    /// 
+    ///
     type Error; // : TokenTypeError<Self::Pos>;
 
     /// The input type that provides the 'get_token' function to
@@ -46,11 +46,13 @@ pub trait ParserInput: Sized {
 
 //tp ParserInputResult
 /// This is the result of the Parser::Stream::get_token function,
-/// which takes 
+/// which takes
 ///
 /// P:Parser
-pub type ParserInputResult<P> =
-    Result<Option<(<P as ParserInput>::Stream, <P as ParserInput>::Token)>, <P as ParserInput>::Error>;
+pub type ParserInputResult<P> = Result<
+    Option<(<P as ParserInput>::Stream, <P as ParserInput>::Token)>,
+    <P as ParserInput>::Error,
+>;
 
 //tt ParserInputStream
 /// Trait required by a parser of its input
@@ -65,4 +67,3 @@ pub type ParserInputResult<P> =
 pub trait ParserInputStream<P: ParserInput<Stream = Self>>: Copy {
     fn get_token(&self) -> ParserInputResult<P>;
 }
-

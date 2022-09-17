@@ -1,5 +1,5 @@
 //a Imports
-use crate::{ParserInput, ParserInputStream, ParseFnResult, ParseResult};
+use crate::{ParseFnResult, ParseResult, ParserInput, ParserInputStream};
 
 //a Success, fail and error
 //fp success
@@ -21,11 +21,12 @@ where
 }
 
 //fp error
-pub fn error<P, I: ParserInputStream<P>, R>(e: <P as ParserInput>::Error) -> impl Fn(I) -> ParseFnResult<P, R>
+pub fn error<P, I: ParserInputStream<P>, R>(
+    e: <P as ParserInput>::Error,
+) -> impl Fn(I) -> ParseFnResult<P, R>
 where
     P: ParserInput<Stream = I>,
-    <P as ParserInput>::Error : Copy,
+    <P as ParserInput>::Error: Copy,
 {
     move |_stream| Err(e)
 }
-

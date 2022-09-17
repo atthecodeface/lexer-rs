@@ -204,4 +204,3 @@ where
 
         } // paste
     }} // macro_rules
-

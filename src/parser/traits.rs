@@ -12,4 +12,3 @@ pub enum ParseResult<P: ParserInput, R> {
 //tp ParserFnResult
 // P:ParserInput<'a, Error = E>
 pub type ParseFnResult<P, R> = Result<ParseResult<P, R>, <P as ParserInput>::Error>;
-

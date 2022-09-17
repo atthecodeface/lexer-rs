@@ -1,6 +1,6 @@
 //a Imports
 use lexer::parser_fn;
-use lexer::{ParserInput, ParserInputStream, ParseFnResult};
+use lexer::{ParseFnResult, ParserInput, ParserInputStream};
 use lexer::{TextPos, TextStreamSpan};
 use lexer::{TokenParseError, TokenTypeError};
 
@@ -54,7 +54,7 @@ struct AbcTokenStream<'a> {
 //ip ParserInput for AbcTokenStream
 impl<'a> ParserInput for AbcTokenStream<'a> {
     type Token = char;
-//    type Pos = Pos;
+    //    type Pos = Pos;
     type Error = AbcTokenStreamError;
     type Stream = AbcTokenStream<'a>;
 }
@@ -131,7 +131,10 @@ struct AbcParser<'parser> {
 macro_rules! abc_pref {
     ($R:ty, $p:ident, $e:ident, $l:lifetime) => {
         unsafe {
-            std::mem::transmute::<&Box<AbcParserFn<$l, 'static, $R>>, &Box<AbcParserFn<'_, 'static, $R>>>(&$p.$e)
+            std::mem::transmute::<
+                &Box<AbcParserFn<$l, 'static, $R>>,
+                &Box<AbcParserFn<'_, 'static, $R>>,
+            >(&$p.$e)
         }
     };
 }
