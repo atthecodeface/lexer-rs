@@ -139,7 +139,7 @@ where
     /// Get the text between a start and end byte offset
     ///
     /// Safety : The byte offsets must correspond to utf8 character points
-    unsafe fn get_text_of_range(&self, range: Range<usize>) -> &str {
+    pub unsafe fn get_text_of_range(&self, range: Range<usize>) -> &str {
         self.text.get_unchecked(range)
     }
 

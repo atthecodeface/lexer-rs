@@ -74,8 +74,8 @@ where
         match ch {
             '+' => Some(Token::Op(Op::Plus)),
             '-' => Some(Token::Op(Op::Minus)),
-            '/' => Some(Token::Op(Op::Times)),
-            '*' => Some(Token::Op(Op::Divide)),
+            '*' => Some(Token::Op(Op::Times)),
+            '/' => Some(Token::Op(Op::Divide)),
             '(' => Some(Token::Open),
             ')' => Some(Token::Close),
             ';' => Some(Token::Semicolon),
@@ -98,8 +98,8 @@ where
     let is_digit = |ch| ('0'..='9').contains(&ch);
     let is_valid_id = |n, ch| is_start_id(ch) || ((n > 0) && is_digit(ch));
     let (stream, opt_x) = stream.do_while(ch, byte_ofs, &is_valid_id);
-    if let Some((_start, _n)) = opt_x {
-        Ok(Some((stream, Token::Whitespace)))
+    if let Some((start, n)) = opt_x {
+        Ok(Some((stream, Token::Id(start.byte_ofs(), n))))
     } else {
         Ok(None)
     }
@@ -136,7 +136,7 @@ fn parse_whitespace_fn<'a>(
 where
     'a: 'a,
 {
-    let is_whitespace = |n, ch| ch == ' ' || ch == '\t' || ch == '\n';
+    let is_whitespace = |_n, ch| ch == ' ' || ch == '\t' || ch == '\n';
     let (stream, opt_x) = stream.do_while(ch, byte_ofs, &is_whitespace);
     if let Some((_start, _n)) = opt_x {
         Ok(Some((stream, Token::Whitespace)))
@@ -147,7 +147,7 @@ where
 
 //fi parse_keyword_fn
 /// Parser function to return a Token if whitespace
-fn parse_keyword_fn<'a>(ch: char, byte_ofs: usize, stream: TextStreamSpan<'a, LineCol>) -> LexResult
+fn parse_keyword_fn<'a>(_ch: char, byte_ofs: usize, stream: TextStreamSpan<'a, LineCol>) -> LexResult
 where
     'a: 'a,
 {
@@ -170,6 +170,21 @@ impl<'a> TokenStream<'a> {
     //fp new
     fn new(text: &'a str) -> Self {
         Self(TextStreamSpan::new(text))
+    }
+
+    //mp get_id
+    fn get_id(&self, t:&Token) -> &str {
+        match t {
+            Token::Id(s, n) => {
+                // Safety:
+                // If the token was 'gotten' correctly then
+                // its values indicate utf8 boundaries in the text
+                unsafe { self.0.get_text_of_range((*s)..(*s+*n)) }
+            }
+            _ => {
+                panic!("Cannot get id from non-ID token");
+            }
+        }
     }
 }
 
@@ -215,3 +230,59 @@ fn test_lex_0() {
     let x = ts.get_token().unwrap();
     assert!(x.is_none());
 }
+
+#[test]
+fn test_lex_1() {
+    let mut ts = TokenStream::new("2() \t-\n+*/let;");
+    for exp_t in [ Token::Value(2.0),
+               Token::Open,
+               Token::Close,
+               Token::Whitespace,
+               Token::Op(Op::Minus),
+               Token::Whitespace,
+               Token::Op(Op::Plus),
+               Token::Op(Op::Times),
+               Token::Op(Op::Divide),
+               Token::Let,
+               Token::Semicolon,
+    ] {
+        let (next_ts, t) = ts.get_token().unwrap().unwrap();
+        assert_eq!(t, exp_t);
+        ts = next_ts;
+    }
+    let x = ts.get_token().unwrap();
+    assert!(x.is_none());
+}
+
+#[test]
+fn test_lex_ids() {
+    let mut ts = TokenStream::new("x y _h");
+    for id in [ "x", "y", "_h"
+    ] {
+        let t  = {
+            loop {
+                let (next_ts, t) = ts.get_token().unwrap().unwrap();
+                ts = next_ts;
+                if t != Token::Whitespace {
+                    break t;
+                }
+            }
+        };
+        if let Token::Id(_s, _n) = &t {
+            assert_eq!(ts.get_id(&t), id);
+        } else {
+            assert!(false, "Token should have been an ID of '{}' but it was {:?}", id, t);
+        }
+        dbg!(&ts);
+    }
+    let x = ts.get_token().unwrap();
+    assert!(x.is_none());
+}
+
+//a Parser
+#[test]
+fn parse_me() {
+    
+}
+
+   
