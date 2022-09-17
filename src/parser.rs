@@ -19,13 +19,37 @@ use crate::lexer::{TextPos, TokenTypeError};
 /// invocations to specifiy the Parser itself, which is an
 /// anti-pattern.
 pub trait Parser: Sized {
+    /// The type of tokens that are parsed by the Parser; a stream of
+    /// these is effectively the input stream to the Parser
     type Token;
-    type Pos: TextPos;
-    type Error: TokenTypeError<Self::Pos>;
+
+    /// An error type that the parser returns if there is a failure to
+    /// parse a input stream of tokens
+    ///
+    /// Using the lexer the Error type will often be:
+    ///
+    ///    Error : lexer::TokenTypeError<Pos : lexer::TextPos>
+    /// 
+    /// Pos is the type of a position in an input that needs to be
+    /// reported for errors, or that is traced within the Tokens;
+    /// often this is the file and start/end lines/characters of the
+    /// token
+    ///
+    /// 
+    type Error; // : TokenTypeError<Self::Pos>;
+
+    /// The input type that provides the 'get_token' function to
+    /// attempt to provide the next token for a parser to try to
+    /// consume.  This type must support Clone as cheaply as possible,
+    /// ideally it should be Copy. This is because the parser must
+    /// keep copies of the input state so that it can backtrack on
+    /// parsing failures.
     type Input: ParserFnInput<Self>;
 }
 
 //tp ParserInputResult
+/// This is the result of the Parser::Input::get_token function,
+/// which takes 
 ///
 /// P:Parser
 pub type ParserInputResult<P> =

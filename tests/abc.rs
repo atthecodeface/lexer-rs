@@ -53,7 +53,7 @@ struct AbcTokenStream<'a> {
 //ip Parser for AbcTokenStream
 impl<'a> Parser for AbcTokenStream<'a> {
     type Token = char;
-    type Pos = Pos;
+//    type Pos = Pos;
     type Error = AbcTokenStreamError;
     type Input = AbcTokenStream<'a>;
 }

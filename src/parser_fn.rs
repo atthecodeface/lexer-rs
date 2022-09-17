@@ -17,8 +17,6 @@ use crate::{Parser, ParserFnInput, ParserFnResult, ParserResult};
 // opt (matched(x) -> matched(Some(x)), mismatch -> Matched(none))
 // recognize (matched(x) -> matched(span))
 // consumed (matched(x) -> matched((span,x)))
-// success(r) -> Matched(r)
-// fail -> Mismatched
 //
 // fold(init, f) -> Mismatched -> matched(acc); Matched -> fold(f(acc, r))
 //  optionally requires at least one match
@@ -33,7 +31,7 @@ use crate::{Parser, ParserFnInput, ParserFnResult, ParserResult};
 // separated pair
 
 //a Macros
-//mi one_f_one_r
+//mi one_f_one_r - for e.g. first_of_n( [ ] )
 // Macro to allow multiple functions with the same return type in a slice
 //
 // Produces:
@@ -79,7 +77,7 @@ pub fn [<$fn_name _dyn_ref_else>] <'b, P, I: ParserFnInput<P>, R, G, const N : u
         } // paste
     }} // macro_rules
 
-//mi many_f_one_r
+//mi many_f_one_r - e.g. for first_of_2/3/4
 // Macro to allow multiple functions with the same return type individually
 //
 // Produces:
@@ -184,7 +182,7 @@ pub fn [< $fn_name _dyn_ref_else>] <'b, P, I: ParserFnInput<P>, R, G>(
         } // paste
     }} // macro_rules
 
-//mi many_f_many_r
+//mi many_f_many_r - e.g. for pair, tuple3, delimited, etc
 // Macro to allow multiple functions with the individual return types
 //
 // Produces:
@@ -229,6 +227,7 @@ where
     }} // macro_rules
 
 //a Success and fail
+//fp success
 pub fn success<P, I: ParserFnInput<P>, R: Copy>(result: R) -> impl Fn(I) -> ParserFnResult<P, R>
 where
     P: Parser<Input = I>,
@@ -236,6 +235,8 @@ where
     use ParserResult::*;
     move |stream| Ok(Matched(stream, result))
 }
+
+//fp fail
 pub fn fail<P, I: ParserFnInput<P>, R>(_unused: R) -> impl Fn(I) -> ParserFnResult<P, R>
 where
     P: Parser<Input = I>,
@@ -369,7 +370,7 @@ use ParserResult::*;
     }
 
 //a Tuples, preceded, succeeded, delimited
-//fp tuple3_ref
+//fp pair
 /// Generate a parser function that attempts three parsers in succession
 /// which must all match; if they do all match then a Match of the
 /// tuple of their results is the response; otherwise a Mismatch
@@ -400,6 +401,7 @@ many_f_many_r! { pair, ( f1: F1 : R1, f2 : F2 : R2, ), (R1, R2), stream {
     }
 }
 
+//fp tuple3
 many_f_many_r! { tuple3, ( f1: F1 : R1, f2 : F2 : R2, f3 : F3 : R3), (R1, R2, R3), stream {
     use ParserResult::*;
         let (stream, r1) = {
@@ -430,6 +432,7 @@ many_f_many_r! { tuple3, ( f1: F1 : R1, f2 : F2 : R2, f3 : F3 : R3), (R1, R2, R3
     }
 }
 
+//fp delimited
 many_f_many_r! { delimited, ( f1: F1 : R1, f2 : F2 : R2, f3 : F3 : R3), R2, stream {
     use ParserResult::*;
         let (stream, _r1) = {
@@ -460,6 +463,7 @@ many_f_many_r! { delimited, ( f1: F1 : R1, f2 : F2 : R2, f3 : F3 : R3), R2, stre
 }
 }
 
+//fp preceded
 many_f_many_r! { preceded, ( f1: F1 : R1, f2 : F2 : R2), R2, stream {
     use ParserResult::*;
         let (stream, _r1) = {
@@ -482,7 +486,8 @@ many_f_many_r! { preceded, ( f1: F1 : R1, f2 : F2 : R2), R2, stream {
     }
 }
 
-many_f_many_r! { succeded, ( f1: F1 : R1, f2 : F2 : R2), R1, stream {
+//fp succeeded
+many_f_many_r! { succeeded, ( f1: F1 : R1, f2 : F2 : R2), R1, stream {
     use ParserResult::*;
         let (stream, r1) = {
             match f1(stream)? {
