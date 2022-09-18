@@ -40,10 +40,10 @@ where
 //ip Display for Pos
 impl<P> std::fmt::Display for Pos<P>
 where
-    P: PosnInStream + std::fmt::Display,
+    P: PosnInStream
 {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        std::fmt::Display::fmt(&self.pos, fmt)
+        self.pos.error_fmt(fmt)
     }
 }
 

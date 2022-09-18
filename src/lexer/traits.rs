@@ -8,11 +8,13 @@ pub trait PosnInStream:
 {
     fn advance_cols(&mut self, _num_chars: usize) {}
     fn advance_line(&mut self) {}
+    fn error_fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+        std::fmt::Debug::fmt(self, fmt)
+    }
 }
 
-//ip PosnInStream for simple types
+//ip PosnInStream for ()
 impl PosnInStream for () {}
-impl PosnInStream for u8 {}
 
 //tt TokenType
 /// The traits required of a token

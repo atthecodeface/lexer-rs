@@ -19,7 +19,7 @@ fn test_me() {
     let a = r##"let add x y = x + y; add 2 3
 "##;
 
-    type P = u8;
+    type P = ();
     type K = u64;
     type TSSpan<'a> = TextStreamSpan<'a, P>;
     type Token = SimpleToken<P, K>;
