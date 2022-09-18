@@ -70,12 +70,15 @@ where
 }
 
 //ip Error for TokenParseError
-impl<P: TextPos> std::error::Error for TokenParseError<P> {}
+impl<P> std::error::Error for TokenParseError<P>
+where
+    P: TextPos + std::fmt::Display,
+{}
 
 //ip TokenTypeError for TokenParseError
 impl<P> TokenTypeError<P> for TokenParseError<P>
 where
-    P: TextPos,
+    P: TextPos + std::fmt::Display,
 {
     fn failed_to_parse(ch: char, stream: TextStreamSpan<P>) -> Self {
         let s = format!("Failed to parse: unexpected char '{}'", ch);
@@ -87,7 +90,7 @@ where
 //ip Display for TokenParseError
 impl<P> std::fmt::Display for TokenParseError<P>
 where
-    P: TextPos,
+    P: TextPos + std::fmt::Display,
 {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(fmt, "{} at {}", self.s, self.pos)

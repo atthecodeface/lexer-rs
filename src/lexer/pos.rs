@@ -4,13 +4,14 @@ use std::ops::Range;
 //a TextPos
 /// Trait for location within a file
 pub trait TextPos:
-    Sized + std::fmt::Debug + std::fmt::Display + Copy + std::default::Default + PartialEq + Eq + std::hash::Hash
+    Sized + std::fmt::Debug + Copy + std::default::Default + PartialEq + Eq + std::hash::Hash
 {
     fn advance_cols(&mut self, _num_chars: usize) {}
     fn advance_line(&mut self) {}
 }
 
-//ip TextPos for u8
+//ip TextPos for simple types
+impl TextPos for () {}
 impl TextPos for u8 {}
 
 //a LineCol
@@ -84,7 +85,7 @@ where
 //ip Display for Pos
 impl<P> std::fmt::Display for Pos<P>
 where
-    P: TextPos,
+    P: TextPos + std::fmt::Display,
 {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         std::fmt::Display::fmt(&self.pos, fmt)
