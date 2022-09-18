@@ -94,8 +94,19 @@ where
     ///
     /// The [StreamCharSpan] must have been provided by a parser and
     /// so the byte offsets are indeed utf8 character boundaries
-    pub fn get_text_span(&self, span: StreamCharSpan<P>) -> &str {
+    pub fn get_text_span(&self, span: &StreamCharSpan<P>) -> &str {
         unsafe { self.get_text_of_range(span.byte_range()) }
+    }
+
+    //mp get_text
+    /// Get the text between two [StreamCharPos] provided by a parser 
+    ///
+    /// # Safety
+    ///
+    /// The [StreamCharPos] must have been provided by a parser and
+    /// so the byte offsets are indeed utf8 character boundaries
+    pub fn get_text(&self, start: P, end:P) -> &str {
+        unsafe { self.get_text_of_range(start.byte_ofs()..end.byte_ofs()) }
     }
 
     //mp peek_at
@@ -230,20 +241,115 @@ where
 }
 
 //a Impl Lexer
-use crate::{Lexer, LexerError, LexerParseFn, LexerParseResult, LexerState};
+//ff local imports
+use crate::{Lexer, LexerError, LexerParseFn, LexerParseResult};
 use std::marker::PhantomData;
+
+//tp TSSLexer
+// Cannot derive either Copy or Clone without that putting the same bound on T and E
 #[derive (Debug)]
-struct TSSLexer<'a, P, T, E>
+pub struct TSSLexer<'a, P, T, E>
 where
-        P: PosnInCharStream,
+    P: PosnInCharStream,
     {
-    tss: TextStreamSpan<'a, P>,
+    pub tss: TextStreamSpan<'a, P>,
     _phantom_token: PhantomData<&'a T>,
     _phantom_error: PhantomData<&'a E>,
+}
+
+//ip Copy for TSSLexer<'a, P, T, E>
+impl <'a, P, T, E> Copy for TSSLexer<'a, P, T, E>
+where
+    P: PosnInCharStream,
+    {
+}
+
+//ip Clone for TSSLexer<'a, P, T, E>
+impl <'a, P, T, E> Clone for TSSLexer<'a, P, T, E>
+where
+    P: PosnInCharStream,
+    {
+    fn clone(&self) -> Self {
+        *self
     }
+}
+
+//ip TSSLexer
+impl <'a, P, T, E> TSSLexer<'a, P, T, E> 
+where
+    P: PosnInCharStream,
+    T: TokenType,
+    E: LexerError<Self>,
+{
+    //fp new
+    /// Create a new [TextStream] by borrowing a [str]
+    pub fn new(text: &'a str) -> Self {
+        let tss = TextStreamSpan::new(text);
+        Self { tss,
+               _phantom_token: PhantomData,
+               _phantom_error: PhantomData,
+        }
+    }
+
+    //cp consume_char
+    /// Become the span after consuming a particular char
+    pub fn consume_char(&self, state: P, ch: char) -> P {
+        if ch == '\n' {
+            state.advance_line(1)
+        } else {
+            state.advance_cols(ch.len_utf8(), 1)
+        }
+    }
+
+    //cp consume_ascii_str
+    /// Become the span after consuming a particular ascii string without newlines
+    pub fn consume_ascii_str(&self, state: P, s: &str) -> P {
+        let n = s.len();
+        state.advance_cols(n, n)
+    }
+
+    //cp consumed_chars
+    /// Become the span after consuming a particular string of known character length
+    pub fn consumed_chars(&self, state: P, num_bytes:usize, num_chars: usize) -> P {
+        state.advance_cols(num_bytes, num_chars)
+    }
+
+    //mp matches
+    /// Match the text at the offset with a str
+    pub fn matches(&self, state: &P, s: &str) -> bool {
+        self.tss.matches_bytes(state.byte_ofs(), s.as_bytes())
+    }
+
+    //mp do_while
+    pub fn do_while<F: Fn(usize, char) -> bool>(
+        &self,
+        mut state: P,
+        ch: char,
+        f: &F,
+    ) -> (P, Option<(P, usize)>) {
+        if !f(0, ch) {
+            return (state, None);
+        }
+        let start = state;
+        let mut n = 1;
+        let mut ofs = state.byte_ofs() + ch.len_utf8();
+        while let Some(ch) = self.tss.peek_at(ofs) {
+            if !f(n, ch) {
+                break;
+            }
+            n += 1;
+            ofs += ch.len_utf8();
+        }
+        // Does not work if newlines are involved
+        state = self.consumed_chars(state, ofs - start.byte_ofs(), n);
+        (state, Some((start, n)))
+    }
+
+}
+//ip Lexer for TSSLexer
 impl <'a, P, T, E> Lexer for TSSLexer<'a, P, T, E> 
 where
-    P: PosnInCharStream + LexerState,
+    P: PosnInCharStream,
     T: TokenType,
     E: LexerError<Self>,
 {

@@ -2,13 +2,15 @@
 use lexer::parser_fn;
 use lexer::{LineColumn, TokenType};
 use lexer::{ParseFnResult, ParseResult, ParserInput, ParserInputStream};
-use lexer::{PosnInCharStream, StreamCharPos, StreamCharSpan, TextStreamSpan};
+use lexer::{PosnInCharStream, StreamCharPos, TextStreamSpan};
 use lexer::{TokenParseError, TokenTypeError};
+use lexer::{TSSLexer};
 
 //a TextStream
 //tp TextStream
 ///
-type TextStream<'a> = TextStreamSpan<'a, StreamCharPos<LineColumn>>;
+type TPos = StreamCharPos<LineColumn>;
+type TextStream<'a> = TSSLexer<'a, TPos, Token, LexError>;
 
 //a LexError
 //tp LexError
@@ -36,6 +38,10 @@ impl TokenTypeError<StreamCharPos<LineColumn>> for LexError {
         Self::BadChar(ch, pos.pos())
     }
 }
+impl <'a> lexer::LexerError<TextStream<'a>> for LexError {
+    fn failed_to_parse(_: &TextStream<'a>, _: TPos, _: char) -> Self { todo!() }
+}
+
 
 //a Token (and sub-enus)
 //tp Token
@@ -54,12 +60,12 @@ impl TokenType for Token {}
 
 //a Lexical analysis functions
 //tp LexResult
-type LexResult<'a> = Result<Option<(TextStream<'a>, Token)>, LexError>;
+type LexResult = Result<Option<(TPos, Token)>, LexError>;
 
 //fi parse_char_fn
 /// Parser function to return a Token if it is a known one
 /// character token otherwise it returns None
-fn parse_char_fn<'a>(ch: char, byte_ofs: usize, stream: TextStream<'a>) -> LexResult<'a>
+fn parse_char_fn<'a>(stream: &TextStream<'a>, state:TPos, ch:char) -> LexResult
 where
     'a: 'a,
 {
@@ -75,7 +81,7 @@ where
             _ => None,
         }
     } {
-        Ok(Some((stream.consume_char(byte_ofs, ch), t)))
+        Ok(Some((stream.consume_char(state, ch), t)))
     } else {
         Ok(None)
     }
@@ -83,16 +89,16 @@ where
 
 //fi parse_id_fn
 /// Parser function to return a Token if the text matches an id
-fn parse_id_fn<'a>(ch: char, byte_ofs: usize, stream: TextStream<'a>) -> LexResult
+fn parse_id_fn<'a>(stream: &TextStream<'a>, state:TPos, ch:char) -> LexResult
 where
     'a: 'a,
 {
     let is_start_id = |ch| ('a'..='z').contains(&ch) || ('A'..='Z').contains(&ch) || ch == '_';
     let is_digit = |ch| ('0'..='9').contains(&ch);
     let is_valid_id = |n, ch| is_start_id(ch) || ((n > 0) && is_digit(ch));
-    let (stream, opt_x) = stream.do_while(ch, byte_ofs, &is_valid_id);
+    let (state, opt_x) = stream.do_while(state, ch, &is_valid_id);
     if let Some((start, n)) = opt_x {
-        Ok(Some((stream, Token::Id(start.byte_ofs(), n))))
+        Ok(Some((state, Token::Id(start.byte_ofs(), n))))
     } else {
         Ok(None)
     }
@@ -100,16 +106,16 @@ where
 
 //fi parse_value_fn
 /// Parser function to return a Token if the text matches a value
-fn parse_value_fn<'a>(ch: char, byte_ofs: usize, stream: TextStream<'a>) -> LexResult<'a>
+fn parse_value_fn<'a>(stream: &TextStream<'a>, state:TPos, ch:char) -> LexResult
 where
     'a: 'a,
 {
     let is_digit = |_, ch| ('0'..='9').contains(&ch);
-    let (stream, opt_x) = stream.do_while(ch, byte_ofs, &is_digit);
-    if let Some((pos, _n)) = opt_x {
-        let s = stream.get_text_span(StreamCharSpan::new(pos, stream.pos()));
+    let (state, opt_x) = stream.do_while(state, ch, &is_digit);
+    if let Some((start, _n)) = opt_x {
+        let s = stream.tss.get_text(start, state);
         let value: f64 = s.parse().unwrap();
-        Ok(Some((stream, Token::Value(value))))
+        Ok(Some((state, Token::Value(value))))
     } else {
         Ok(None)
     }
@@ -117,14 +123,14 @@ where
 
 //fi parse_whitespace_fn
 /// Parser function to return a Token if whitespace
-fn parse_whitespace_fn<'a>(ch: char, byte_ofs: usize, stream: TextStream<'a>) -> LexResult
+fn parse_whitespace_fn<'a>(stream: &TextStream<'a>, state:TPos, ch:char) -> LexResult
 where
     'a: 'a,
 {
     let is_whitespace = |_n, ch| ch == ' ' || ch == '\t' || ch == '\n';
-    let (stream, opt_x) = stream.do_while(ch, byte_ofs, &is_whitespace);
+    let (state, opt_x) = stream.do_while(state, ch, &is_whitespace);
     if let Some((_start, _n)) = opt_x {
-        Ok(Some((stream, Token::Whitespace)))
+        Ok(Some((state, Token::Whitespace)))
     } else {
         Ok(None)
     }
@@ -132,13 +138,13 @@ where
 
 //fi parse_keyword_fn
 /// Parser function to return a Token if whitespace
-fn parse_keyword_fn<'a>(_ch: char, byte_ofs: usize, stream: TextStream<'a>) -> LexResult
+fn parse_keyword_fn<'a>(stream: &TextStream<'a>, state:TPos, _ch:char) -> LexResult
 where
     'a: 'a,
 {
-    if stream.matches(byte_ofs, "let") {
-        let stream = stream.consume_ascii_str(byte_ofs, "let");
-        Ok(Some((stream, Token::Let)))
+    if stream.matches(&state, "let") {
+        state = stream.consume_ascii_str(state, "let");
+        Ok(Some((state, Token::Let)))
     } else {
         Ok(None)
     }
@@ -148,13 +154,13 @@ where
 //tp TokenStream
 /// A stream of tokens
 #[derive(Debug, Clone, Copy)]
-struct TokenStream<'a>(TextStream<'a>);
+struct TokenStream<'a> (TextStream<'a>);
 
 //ip TokenStream
 impl<'a> TokenStream<'a> {
     //fp new
     fn new(text: &'a str) -> Self {
-        Self(TextStreamSpan::new(text))
+        Self(TSSLexer::new(text))
     }
 
     //mp get_id
@@ -164,7 +170,7 @@ impl<'a> TokenStream<'a> {
                 // Safety:
                 // If the token was 'gotten' correctly then
                 // its values indicate utf8 boundaries in the text
-                unsafe { self.0.get_text_of_range((*s)..(*s + *n)) }
+                unsafe { self.0.tss.get_text_of_range((*s)..(*s + *n)) }
             }
             _ => {
                 panic!("Cannot get id from non-ID token");
@@ -177,18 +183,33 @@ impl<'a> TokenStream<'a> {
 #[derive(Debug)]
 struct ParseError();
 
+//ip ParserInputStream for ParserInputTokenStream
+#[derive(Debug, Clone, Copy)]
+struct ParserInputTokenStream<'a> {
+    tss: &'a TextStream<'a>,
+    pos : TPos,
+}
+impl <'a> ParserInputTokenStream<'a> {
+    fn new(tss: &'a TextStream<'a>) -> Self {
+        let pos = TPos::default();
+        Self { tss, pos }
+    }
+    fn at_pos(&self, pos:TPos) -> Self {
+        Self { tss : self.tss,
+               pos }
+    }
+}
+
 //ip ParserInput for TokenStream
 impl<'a> ParserInput for TokenStream<'a> {
     type Token = Token;
     type Error = LexError;
-    type Stream = TokenStream<'a>;
+    type Stream = ParserInputTokenStream<'a>;
 }
 
-//ip TokenStream
-impl<'a> TokenStream<'a> {}
-
-//ip ParserInputStream for TokenStream
-impl<'a> ParserInputStream<TokenStream<'a>> for TokenStream<'a> {
+//ip ParserInputStream for ParserInputTokenStream
+use lexer::Lexer;
+impl<'a> ParserInputStream<TokenStream<'a>> for ParserInputTokenStream<'a> {
     //
     fn get_token(&self) -> Result<Option<(Self, Token)>, LexError> {
         let parsers = &[
@@ -198,7 +219,9 @@ impl<'a> ParserInputStream<TokenStream<'a>> for TokenStream<'a> {
             parse_value_fn,
             parse_char_fn,
         ];
-        Ok(self.0.parse(parsers)?.map(|(stream, t)| (Self(stream), t)))
+        Ok(self.tss
+           .parse( self.pos, parsers)?
+           .map(|(state, t)| (self.at_pos(state), t)))
     }
 }
 
@@ -343,7 +366,7 @@ impl std::fmt::Display for Expr {
 
 //a Parse functions
 //fi parse_eof
-fn parse_eof(input: TokenStream) -> ParseFnResult<TokenStream, ()> {
+fn parse_eof(input: ParserInputTokenStream) -> ParseFnResult<ParserInputTokenStream, ()> {
     if input.get_token()?.is_some() {
         Ok(ParseResult::Mismatched)
     } else {
@@ -352,7 +375,7 @@ fn parse_eof(input: TokenStream) -> ParseFnResult<TokenStream, ()> {
 }
 
 //fi parse_leaf
-fn parse_leaf(input: TokenStream) -> ParseFnResult<TokenStream, Expr> {
+fn parse_leaf(input: ParserInputTokenStream) -> ParseFnResult<ParserInputTokenStream, Expr> {
     let parse_value = parser_fn::token_map(|t| Expr::from_token(&t));
     let parse_bracketed = parser_fn::delimited(
         parser_fn::matches(|t| matches!(t, Token::Open)),
@@ -363,7 +386,7 @@ fn parse_leaf(input: TokenStream) -> ParseFnResult<TokenStream, Expr> {
 }
 
 //fi parse_binop_1
-fn parse_binop_1(input: TokenStream) -> ParseFnResult<TokenStream, Expr> {
+fn parse_binop_1(input: ParserInputTokenStream) -> ParseFnResult<ParserInputTokenStream, Expr> {
     parser_fn::fold(
         0,
         |_n, v1, (o, v2)| Expr::BinaryOp(o, Box::new(v1), Box::new(v2)),
@@ -380,7 +403,7 @@ fn parse_binop_1(input: TokenStream) -> ParseFnResult<TokenStream, Expr> {
 }
 
 //fi parse_binop_2
-fn parse_binop_2(input: TokenStream) -> ParseFnResult<TokenStream, Expr> {
+fn parse_binop_2(input: ParserInputTokenStream) -> ParseFnResult<ParserInputTokenStream, Expr> {
     parser_fn::fold(
         0,
         |_n, v1, (o, v2)| Expr::BinaryOp(o, Box::new(v1), Box::new(v2)),
@@ -397,7 +420,7 @@ fn parse_binop_2(input: TokenStream) -> ParseFnResult<TokenStream, Expr> {
 }
 
 //fi parse_expr
-fn parse_expr(input: TokenStream) -> ParseFnResult<TokenStream, Expr> {
+fn parse_expr(input: ParserInputTokenStream) -> ParseFnResult<ParserInputTokenStream, Expr> {
     parse_binop_2(input)
 }
 
@@ -409,18 +432,22 @@ fn parse_and_evaluate() {
             LexError::Failure
         });
 
-    let ts = TokenStream::new("1+2*3+4+(5+6)");
-    let e = parse_expr_eof(ts).expect("Expression should parse cleanly");
+    let tss = TextStream::new("1+2*3+4+(5+6)");
+    let pits = ParserInputTokenStream::new(&tss);
+    let e = parse_expr_eof(pits).expect("Expression should parse cleanly");
     assert_eq!(e.evaluate(&Scope()).unwrap(), 22.0);
 
     let ts = TokenStream::new("1+2*(3+4)+5+6");
+    let pits = ParserInputTokenStream::new(&tss);
     let e = parse_expr_eof(ts).expect("Expression should parse cleanly");
     assert_eq!(e.evaluate(&Scope()).unwrap(), 26.0);
 
     let ts = TokenStream::new("1+2*(4-3+2)+5+6");
-    let e = parse_expr_eof(ts).expect("Expression should parse cleanly");
+    let pits = ParserInputTokenStream::new(&tss);
+    let e = parse_expr_eof(pits).expect("Expression should parse cleanly");
     assert_eq!(e.evaluate(&Scope()).unwrap(), 18.0);
 
     let ts = TokenStream::new("1++2*(4-3+2)+5+6");
-    assert_eq!(parse_expr_eof(ts).unwrap_err(), LexError::Failure);
+    let pits = ParserInputTokenStream::new(&tss);
+    assert_eq!(parse_expr_eof(pits).unwrap_err(), LexError::Failure);
 }

@@ -1,6 +1,6 @@
 //a Imports
 use crate::{
-    PosnInCharStream, StreamCharPos, StreamCharSpan, TextStreamSpan, TokenParseResult, TokenType,
+    PosnInCharStream, StreamCharSpan, TextStreamSpan, TokenParseResult, TokenType,
     TokenTypeError,
 };
 

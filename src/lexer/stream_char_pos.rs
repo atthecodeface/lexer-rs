@@ -39,7 +39,7 @@ where
     }
 }
 
-//ip PosnInStream for StreamCharPos
+//ip PosnInCharStream for StreamCharPos
 impl<P> PosnInCharStream for StreamCharPos<P>
 where
     P: PosnInStream,

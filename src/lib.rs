@@ -8,9 +8,9 @@ pub use crate::lexer::{LineColumn, PosnInCharStream, PosnInStream, StreamCharPos
 pub use crate::lexer::{SimpleKeyword, SimpleToken};
 pub use crate::lexer::{
     TextStreamSpan, TextStreamSpanIterator, TokenParseError, TokenParseResult, TokenParser,
-    TokenType, TokenTypeError,
+    TokenType, TokenTypeError, TSSLexer
 };
-pub use crate::lexer::{LexerError, LexerState, LexerParseFn, LexerParseResult, Lexer};
+pub use crate::lexer::{LexerError, LexerParseFn, LexerParseResult, Lexer};
 pub use crate::lexer::{ParserIterator};
 
 pub use parser::{ParseFnResult, ParseResult};

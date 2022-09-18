@@ -1,7 +1,7 @@
 //a Imports
 use lexer::parser_fn;
 use lexer::{ParseFnResult, ParserInput, ParserInputStream};
-use lexer::{PosnInCharStream, TextStreamSpan};
+use lexer::{TextStreamSpan};
 use lexer::{TokenParseError, TokenTypeError};
 
 //a Pos

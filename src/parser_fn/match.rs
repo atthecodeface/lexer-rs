@@ -12,7 +12,7 @@ where
     F: Fn(P::Token) -> bool,
 {
     use ParseResult::*;
-    move |mut input| match input.get_token()? {
+    move |input| match input.get_token()? {
         Some((next_input, token)) => {
             if f(token) {
                 Ok(Matched(next_input, ()))
