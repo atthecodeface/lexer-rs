@@ -1,18 +1,7 @@
 //a Imports
 use std::ops::Range;
 
-//a TextPos
-/// Trait for location within a file
-pub trait TextPos:
-    Sized + std::fmt::Debug + Copy + std::default::Default + PartialEq + Eq + std::hash::Hash
-{
-    fn advance_cols(&mut self, _num_chars: usize) {}
-    fn advance_line(&mut self) {}
-}
-
-//ip TextPos for simple types
-impl TextPos for () {}
-impl TextPos for u8 {}
+use crate::PosnInStream;
 
 //a LineCol
 //tp LineCol
@@ -37,8 +26,8 @@ impl std::fmt::Display for LineCol {
     }
 }
 
-//ip TextPos for LineCol
-impl TextPos for LineCol {
+//ip PosnInStream for LineCol
+impl PosnInStream for LineCol {
     fn advance_cols(&mut self, num_chars: usize) {
         self.column += num_chars;
     }
@@ -53,7 +42,7 @@ impl TextPos for LineCol {
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Hash)]
 pub struct Pos<P>
 where
-    P: TextPos,
+    P: PosnInStream,
 {
     byte_ofs: usize,
     pos: P,
@@ -62,7 +51,7 @@ where
 //ip Pos
 impl<P> Pos<P>
 where
-    P: TextPos,
+    P: PosnInStream,
 {
     pub fn pos(&self) -> P {
         self.pos
@@ -85,7 +74,7 @@ where
 //ip Display for Pos
 impl<P> std::fmt::Display for Pos<P>
 where
-    P: TextPos + std::fmt::Display,
+    P: PosnInStream + std::fmt::Display,
 {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         std::fmt::Display::fmt(&self.pos, fmt)
@@ -98,7 +87,7 @@ where
 #[derive(Debug, Copy, Clone)]
 pub struct Span<P>
 where
-    P: TextPos,
+    P: PosnInStream,
 {
     start: Pos<P>,
     end: Pos<P>,
@@ -107,7 +96,7 @@ where
 //ip Span
 impl<P> Span<P>
 where
-    P: TextPos,
+    P: PosnInStream,
 {
     //fp new
     /// Create a new [Span]

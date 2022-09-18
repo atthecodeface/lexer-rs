@@ -1,7 +1,7 @@
 //a Imports
 use std::ops::Range;
 
-use crate::{Pos, Span, TextPos};
+use crate::{Pos, Span, PosnInStream};
 
 //a External traits
 //tt TokenType
@@ -19,7 +19,7 @@ impl TokenType for usize {}
 /// A trait required of an error - a char that does not match any
 /// token parser rust return an error, and this trait requires that
 /// such an error be provided
-pub trait TokenTypeError<P: TextPos>: Sized + std::error::Error {
+pub trait TokenTypeError<P: PosnInStream>: Sized + std::error::Error {
     fn failed_to_parse(ch: char, stream: TextStreamSpan<P>) -> Self;
 }
 
@@ -34,7 +34,7 @@ pub trait TokenTypeError<P: TextPos>: Sized + std::error::Error {
 /// If the result is Some((stream, token)) then the token has been
 /// parsed and the stream has been moved on beyond that token
 ///
-/// P : TextPos
+/// P : PosnInStream
 ///
 /// T : TokenType
 ///
@@ -46,7 +46,7 @@ pub type TokenParseResult<'a, P, T, E> = Result<Option<(TextStreamSpan<'a, P>, T
 ///
 /// Parsers return Ok(Some(T)) if it parses a token of type T; Ok(None) if they fail to parse; Err(TokenTypeError) if they
 ///
-/// P : TextPos
+/// P : PosnInStream
 ///
 /// T : TokenType
 ///
@@ -59,11 +59,11 @@ pub type TokenParser<'a, P, T, E> =
 ///
 /// An error in parsing a token - most often an 'unrecognized character'
 ///
-/// P : TextPos
+/// P : PosnInStream
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TokenParseError<P>
 where
-    P: TextPos,
+    P: PosnInStream,
 {
     s: String,
     pos: Pos<P>,
@@ -72,13 +72,13 @@ where
 //ip Error for TokenParseError
 impl<P> std::error::Error for TokenParseError<P>
 where
-    P: TextPos + std::fmt::Display,
+    P: PosnInStream + std::fmt::Display,
 {}
 
 //ip TokenTypeError for TokenParseError
 impl<P> TokenTypeError<P> for TokenParseError<P>
 where
-    P: TextPos + std::fmt::Display,
+    P: PosnInStream + std::fmt::Display,
 {
     fn failed_to_parse(ch: char, stream: TextStreamSpan<P>) -> Self {
         let s = format!("Failed to parse: unexpected char '{}'", ch);
@@ -90,7 +90,7 @@ where
 //ip Display for TokenParseError
 impl<P> std::fmt::Display for TokenParseError<P>
 where
-    P: TextPos + std::fmt::Display,
+    P: PosnInStream + std::fmt::Display,
 {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(fmt, "{} at {}", self.s, self.pos)
@@ -102,7 +102,7 @@ where
 #[derive(Debug, Copy, Clone)]
 pub struct TextStreamSpan<'a, P>
 where
-    P: TextPos,
+    P: PosnInStream,
 {
     text: &'a str,
     end: usize,
@@ -112,7 +112,7 @@ where
 //ip TextStreamSpan
 impl<'a, P> TextStreamSpan<'a, P>
 where
-    P: TextPos,
+    P: PosnInStream,
 {
     //fp new
     /// Create a new [TextStream] by borrowing a [str]
@@ -299,7 +299,7 @@ where
 /// An iterator over a TextStream presenting the parsed Tokens from it
 pub struct TextStreamSpanIterator<'a, P, T, E>
 where
-    P: TextPos,
+    P: PosnInStream,
     T: TokenType,
     E: TokenTypeError<P>,
 {
@@ -310,7 +310,7 @@ where
 //ip TextStreamSpanIterator
 impl<'a, P, T, E> TextStreamSpanIterator<'a, P, T, E>
 where
-    P: TextPos,
+    P: PosnInStream,
     T: TokenType,
     E: TokenTypeError<P>,
 {
@@ -323,7 +323,7 @@ where
 //ip Iterator for TextStreamSpanIterator
 impl<'a, P, T, E> Iterator for TextStreamSpanIterator<'a, P, T, E>
 where
-    P: TextPos,
+    P: PosnInStream,
     T: TokenType,
     E: TokenTypeError<P>,
 {

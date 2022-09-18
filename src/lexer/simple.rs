@@ -1,5 +1,5 @@
 //a Imports
-use crate::{Pos, Span, TextPos, TextStreamSpan, TokenParseResult, TokenType, TokenTypeError};
+use crate::{Pos, Span, PosnInStream, TextStreamSpan, TokenParseResult, TokenType, TokenTypeError};
 
 //a SimpleToken
 //tt SimpleKeyword
@@ -14,7 +14,7 @@ impl SimpleKeyword for usize {}
 
 //tp SimpleToken
 #[derive(Debug, Copy, Clone)]
-pub enum SimpleToken<P: TextPos, K: SimpleKeyword> {
+pub enum SimpleToken<P: PosnInStream, K: SimpleKeyword> {
     /// Comment is '//' and up to (and not including) a newline
     CommentLine(Span<P>),
     /// ID is an id start and any id following
@@ -38,7 +38,7 @@ pub enum SimpleToken<P: TextPos, K: SimpleKeyword> {
 //ip TokenType for SimpleToken
 impl<P, K> TokenType for SimpleToken<P, K>
 where
-    P: TextPos,
+    P: PosnInStream,
     K: SimpleKeyword,
 {
 }
@@ -46,7 +46,7 @@ where
 //ip SimpleToken
 impl<P, K> SimpleToken<P, K>
 where
-    P: TextPos,
+    P: PosnInStream,
     K: SimpleKeyword,
 {
     //fp parse_char

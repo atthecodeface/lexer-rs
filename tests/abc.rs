@@ -1,7 +1,7 @@
 //a Imports
 use lexer::parser_fn;
 use lexer::{ParseFnResult, ParserInput, ParserInputStream};
-use lexer::{TextPos, TextStreamSpan};
+use lexer::{PosnInStream, TextStreamSpan};
 use lexer::{TokenParseError, TokenTypeError};
 
 //a Pos
@@ -9,8 +9,8 @@ use lexer::{TokenParseError, TokenTypeError};
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash)]
 struct Pos(());
 
-//ip TextPos of Pos
-impl TextPos for Pos {}
+//ip PosnInStream of Pos
+impl PosnInStream for Pos {}
 
 //ip Display for Pos
 impl std::fmt::Display for Pos {
