@@ -53,6 +53,25 @@ impl PosnInCharStream for usize {
     }
 }
 
+//a Stuff
+pub trait LexerState<P> : Sized + Copy + std::fmt::Debug {
+}
+pub trait Lexer : std::fmt::Debug {
+    type Posn;
+    type Token : TokenType;
+    type State: LexerState<Self::Posn>;
+    type Error: TokenTypeError<Self::Posn>;
+    fn parse(&self,
+             state: Self::State,
+             parsers: &[LexerParseFn<Self>],
+    ) -> LexerParseResult<Self>;
+}
+pub type LexerParseResult<L> = Result<Option<(<L as Lexer>::State,
+                                              <L as Lexer>::Token)>,
+                                      <L as Lexer>::Error>;
+pub type LexerParseFn<L> =
+    fn(char, <L as Lexer>::State) -> LexerParseResult<L>;
+
 //a Tokens
 //tt TokenType
 /// The traits required of a token
@@ -69,6 +88,6 @@ impl TokenType for usize {}
 /// A trait required of an error - a char that does not match any
 /// token parser rust return an error, and this trait requires that
 /// such an error be provided
-pub trait TokenTypeError<P: PosnInCharStream>: Sized + std::error::Error {
+pub trait TokenTypeError<P>: Sized + std::error::Error {
     fn failed_to_parse(ch: char, pos: P) -> Self;
 }
