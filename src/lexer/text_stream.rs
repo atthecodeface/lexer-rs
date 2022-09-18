@@ -1,9 +1,9 @@
 //a Imports
 use std::ops::Range;
 
-use crate::{PosnInCharStream, StreamCharPos, StreamCharSpan, TokenType, TokenTypeError};
+use crate::{PosnInCharStream, StreamCharSpan, TokenParseError, TokenType, TokenTypeError};
 
-//a Errors and resultu
+//a TokenParseResult
 //tp TokenParseResult
 /// The result of attempting to parse a token in a stream
 ///
@@ -22,6 +22,7 @@ use crate::{PosnInCharStream, StreamCharPos, StreamCharSpan, TokenType, TokenTyp
 /// E: TokenTypeError<P>
 pub type TokenParseResult<'a, P, T, E> = Result<Option<(TextStreamSpan<'a, P>, T)>, E>;
 
+//a TokenParser
 //tp TokenParser
 /// A function that maps a character, usize byte offset within the stream, and a stream to a token
 ///
@@ -34,45 +35,6 @@ pub type TokenParseResult<'a, P, T, E> = Result<Option<(TextStreamSpan<'a, P>, T
 /// E: TokenTypeError<P>
 pub type TokenParser<'a, P, T, E> =
     fn(char, usize, TextStreamSpan<'a, P>) -> TokenParseResult<'a, P, T, E>;
-
-//tp TokenParseError
-/// A simple implementation of a type supporting TokenTypeError
-///
-/// An error in parsing a token - most often an 'unrecognized character'
-///
-/// P : PosnInCharStream
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct TokenParseError<P>
-where
-    P: PosnInCharStream,
-{
-    s: String,
-    pos: P,
-}
-
-//ip Error for TokenParseError
-impl<P> std::error::Error for TokenParseError<P> where P: PosnInCharStream {}
-
-impl<P> TokenTypeError<P> for TokenParseError<P>
-where
-    P: PosnInCharStream,
-{
-    fn failed_to_parse(ch: char, pos: P) -> Self {
-        let s = format!("Failed to parse: unexpected char '{}'", ch);
-        Self { s, pos }
-    }
-}
-
-//ip Display for TokenParseError
-impl<P> std::fmt::Display for TokenParseError<P>
-where
-    P: PosnInCharStream,
-{
-    fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        write!(fmt, "{} at ", self.s)?;
-        self.pos.error_fmt(fmt)
-    }
-}
 
 //a TextStreamSpan
 //tp TextStreamSpan
