@@ -1,23 +1,12 @@
 //a Imports
 use lexer::parser_fn;
 use lexer::{ParseFnResult, ParserInput, ParserInputStream};
-use lexer::{PosnInStream, TextStreamSpan};
+use lexer::{PosnInCharStream, TextStreamSpan};
 use lexer::{TokenParseError, TokenTypeError};
 
 //a Pos
 //tp Pos
-#[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash)]
-struct Pos(());
-
-//ip PosnInStream of Pos
-impl PosnInStream for Pos {}
-
-//ip Display for Pos
-impl std::fmt::Display for Pos {
-    fn fmt(&self, _fmt: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
-        Ok(())
-    }
-}
+type Pos = usize;
 
 //a AbcTokenStream
 //tp AbcTokenStreamError
@@ -34,7 +23,7 @@ impl std::fmt::Display for AbcTokenStreamError {
 }
 impl std::error::Error for AbcTokenStreamError {}
 impl TokenTypeError<Pos> for AbcTokenStreamError {
-    fn failed_to_parse(_: char, _: lexer::Pos<Pos>) -> Self {
+    fn failed_to_parse(_: char, _: Pos) -> Self {
         todo!()
     }
 }

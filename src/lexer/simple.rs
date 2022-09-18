@@ -1,5 +1,5 @@
 //a Imports
-use crate::{Pos, Span, PosnInStream, TextStreamSpan, TokenParseResult, TokenType, TokenTypeError};
+use crate::{StreamCharPos, StreamCharSpan, PosnInCharStream, TextStreamSpan, TokenParseResult, TokenType, TokenTypeError};
 
 //a SimpleToken
 //tt SimpleKeyword
@@ -13,32 +13,32 @@ impl SimpleKeyword for u64 {}
 impl SimpleKeyword for usize {}
 
 //tp SimpleToken
-#[derive(Debug, Copy, Clone)]
-pub enum SimpleToken<P: PosnInStream, K: SimpleKeyword> {
+#[derive(Debug, Clone, Copy)]
+pub enum SimpleToken<P: PosnInCharStream, K: SimpleKeyword> {
     /// Comment is '//' and up to (and not including) a newline
-    CommentLine(Span<P>),
+    CommentLine(StreamCharSpan<P>),
     /// ID is an id start and any id following
-    Id(Span<P>),
+    Id(StreamCharSpan<P>),
     /// digits is decimal digits
-    Digits(Span<P>),
+    Digits(StreamCharSpan<P>),
     /// OpenBra is one of ( [ {
-    OpenBra(Pos<P>, char),
+    OpenBra(P, char),
     /// CloseBra is one of } ] )
-    CloseBra(Pos<P>, char),
+    CloseBra(P, char),
     /// Whitespace is a span of spaces and tabs
-    Whitespace(Span<P>),
+    Whitespace(StreamCharSpan<P>),
     /// Keyword is one of the ascii keywords supplied
-    Keyword(Pos<P>, K),
+    Keyword(P, K),
     /// Newline is a Newline
-    Newline(Pos<P>),
+    Newline(P),
     /// Char is an otherwise unknown char
-    Char(Pos<P>, char),
+    Char(P, char),
 }
 
 //ip TokenType for SimpleToken
 impl<P, K> TokenType for SimpleToken<P, K>
 where
-    P: PosnInStream,
+    P: PosnInCharStream,
     K: SimpleKeyword,
 {
 }
@@ -46,7 +46,7 @@ where
 //ip SimpleToken
 impl<P, K> SimpleToken<P, K>
 where
-    P: PosnInStream,
+    P: PosnInCharStream,
     K: SimpleKeyword,
 {
     //fp parse_char
@@ -86,7 +86,7 @@ where
             ((n < 2) && (ch == '/')) || ((n >= 2) && ch != '\n')
         }) {
             (stream, Some((pos, _n))) => {
-                let span = Span::new(pos, stream.pos());
+                let span = StreamCharSpan::new(pos, stream.pos());
                 Ok(Some((stream, SimpleToken::CommentLine(span))))
             }
             (_, None) => Ok(None),
@@ -101,7 +101,7 @@ where
     ) -> TokenParseResult<P, Self, E> {
         match stream.do_while(ch, byte_ofs, &|_, ch| ch.is_ascii_digit()) {
             (stream, Some((pos, _n))) => {
-                let span = Span::new(pos, stream.pos());
+                let span = StreamCharSpan::new(pos, stream.pos());
                 Ok(Some((stream, SimpleToken::Digits(span))))
             }
             (_, None) => Ok(None),
@@ -116,7 +116,7 @@ where
     ) -> TokenParseResult<P, Self, E> {
         match stream.do_while(ch, byte_ofs, &|_, ch| (ch == ' ' || ch == '\t')) {
             (stream, Some((pos, _))) => {
-                let span = Span::new(pos, stream.pos());
+                let span = StreamCharSpan::new(pos, stream.pos());
                 Ok(Some((stream, SimpleToken::Whitespace(span))))
             }
             (_, None) => Ok(None),
@@ -135,7 +135,7 @@ where
             (n == 0 && is_id_start(ch)) || ((n > 0) && is_id(ch))
         }) {
             (stream, Some((pos, _))) => {
-                let span = Span::new(pos, stream.pos());
+                let span = StreamCharSpan::new(pos, stream.pos());
                 Ok(Some((stream, SimpleToken::Id(span))))
             }
             (_, None) => Ok(None),

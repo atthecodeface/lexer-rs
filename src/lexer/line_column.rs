@@ -1,6 +1,4 @@
 //a Imports
-use std::ops::Range;
-
 use crate::PosnInStream;
 
 //a LineColumn
@@ -28,12 +26,14 @@ impl std::fmt::Display for LineColumn {
 
 //ip PosnInStream for LineColumn
 impl PosnInStream for LineColumn {
-    fn advance_cols(&mut self, num_chars: usize) {
+    fn advance_cols(mut self, _:usize, num_chars: usize) -> Self {
         self.column += num_chars;
+        self
     }
-    fn advance_line(&mut self) {
+    fn advance_line(mut self, _:usize) -> Self {
         self.column = 1;
         self.line += 1;
+        self
     }
 }
 

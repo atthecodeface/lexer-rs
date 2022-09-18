@@ -1,7 +1,7 @@
 //a Imports
 use std::ops::Range;
 
-use crate::{Pos, Span, PosnInStream, TokenType, TokenTypeError, };
+use crate::{StreamCharPos, StreamCharSpan, PosnInCharStream, TokenType, TokenTypeError, };
 
 //a Errors and resultu
 //tp TokenParseResult
@@ -15,7 +15,7 @@ use crate::{Pos, Span, PosnInStream, TokenType, TokenTypeError, };
 /// If the result is Some((stream, token)) then the token has been
 /// parsed and the stream has been moved on beyond that token
 ///
-/// P : PosnInStream
+/// P : PosnInCharStream
 ///
 /// T : TokenType
 ///
@@ -27,7 +27,7 @@ pub type TokenParseResult<'a, P, T, E> = Result<Option<(TextStreamSpan<'a, P>, T
 ///
 /// Parsers return Ok(Some(T)) if it parses a token of type T; Ok(None) if they fail to parse; Err(TokenTypeError) if they
 ///
-/// P : PosnInStream
+/// P : PosnInCharStream
 ///
 /// T : TokenType
 ///
@@ -40,27 +40,27 @@ pub type TokenParser<'a, P, T, E> =
 ///
 /// An error in parsing a token - most often an 'unrecognized character'
 ///
-/// P : PosnInStream
+/// P : PosnInCharStream
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TokenParseError<P>
 where
-    P: PosnInStream,
+    P: PosnInCharStream,
 {
     s: String,
-    pos: Pos<P>,
+    pos: P,
 }
 
 //ip Error for TokenParseError
 impl<P> std::error::Error for TokenParseError<P>
 where
-    P: PosnInStream,
+    P: PosnInCharStream,
 {}
 
 impl<P> TokenTypeError<P> for TokenParseError<P>
 where
-    P: PosnInStream,
+    P: PosnInCharStream,
 {
-    fn failed_to_parse(ch: char, pos:Pos<P>) -> Self {
+    fn failed_to_parse(ch: char, pos:P) -> Self {
         let s = format!("Failed to parse: unexpected char '{}'", ch);
         Self { s, pos }
     }
@@ -69,10 +69,11 @@ where
 //ip Display for TokenParseError
 impl<P> std::fmt::Display for TokenParseError<P>
 where
-    P: PosnInStream,
+    P: PosnInCharStream,
 {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        write!(fmt, "{} at {}", self.s, self.pos)
+        write!(fmt, "{} at ", self.s)?;
+        self.pos.error_fmt(fmt)
     }
 }
 
@@ -81,17 +82,17 @@ where
 #[derive(Debug, Copy, Clone)]
 pub struct TextStreamSpan<'a, P>
 where
-    P: PosnInStream,
+    P: PosnInCharStream,
 {
     text: &'a str,
     end: usize,
-    pos: Pos<P>,
+    pos: P,
 }
 
 //ip TextStreamSpan
 impl<'a, P> TextStreamSpan<'a, P>
 where
-    P: PosnInStream,
+    P: PosnInCharStream,
 {
     //fp new
     /// Create a new [TextStream] by borrowing a [str]
@@ -99,12 +100,12 @@ where
         Self {
             text,
             end: text.len(),
-            pos: Pos::default(),
+            pos: P::default(),
         }
     }
 
     //ap pos
-    pub fn pos(&self) -> Pos<P> {
+    pub fn pos(&self) -> P {
         self.pos
     }
 
@@ -128,18 +129,18 @@ where
     //mp old_get_text
     /// Get all the text of this stream - from pos to end
     ///
-    /// Safety : The Span has been provided by a parser and so the
+    /// Safety : The StreamCharSpan has been provided by a parser and so the
     /// byte offsets are indeed utf8 character boundaries
     pub fn old_get_text(&self) -> &str {
         unsafe { self.get_text_of_range(self.pos.byte_ofs()..self.end) }
     }
 
     //mp get_text_span
-    /// Get the text of a [Span] provided by the parsers
+    /// Get the text of a [StreamCharSpan] provided by the parsers
     ///
-    /// Safety : The Span has been provided by a parser and so the
+    /// Safety : The StreamCharSpan has been provided by a parser and so the
     /// byte offsets are indeed utf8 character boundaries
-    pub fn get_text_span(&self, span: Span<P>) -> &str {
+    pub fn get_text_span(&self, span: StreamCharSpan<P>) -> &str {
         unsafe { self.get_text_of_range(span.byte_range()) }
     }
 
@@ -219,7 +220,7 @@ where
         ch: char,
         byte_ofs: usize,
         f: &F,
-    ) -> (Self, Option<(Pos<P>, usize)>) {
+    ) -> (Self, Option<(P, usize)>) {
         if !f(0, ch) {
             return (self, None);
         }
@@ -278,7 +279,7 @@ where
 /// An iterator over a TextStream presenting the parsed Tokens from it
 pub struct TextStreamSpanIterator<'a, P, T, E>
 where
-    P: PosnInStream,
+    P: PosnInCharStream,
     T: TokenType,
     E: TokenTypeError<P>,
 {
@@ -289,7 +290,7 @@ where
 //ip TextStreamSpanIterator
 impl<'a, P, T, E> TextStreamSpanIterator<'a, P, T, E>
 where
-    P: PosnInStream,
+    P: PosnInCharStream,
     T: TokenType,
     E: TokenTypeError<P>,
 {
@@ -302,7 +303,7 @@ where
 //ip Iterator for TextStreamSpanIterator
 impl<'a, P, T, E> Iterator for TextStreamSpanIterator<'a, P, T, E>
 where
-    P: PosnInStream,
+    P: PosnInCharStream,
     T: TokenType,
     E: TokenTypeError<P>,
 {
