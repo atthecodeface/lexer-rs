@@ -1,28 +1,9 @@
 //a Imports
 use std::ops::Range;
 
-use crate::{Pos, Span, PosnInStream};
+use crate::{Pos, Span, PosnInStream, TokenType, TokenTypeError, };
 
-//a External traits
-//tt TokenType
-/// The traits required of a token
-pub trait TokenType: Sized + std::fmt::Debug + Copy {}
-
-//ip TokenType for char and u*
-impl TokenType for char {}
-impl TokenType for u8 {}
-impl TokenType for u16 {}
-impl TokenType for u32 {}
-impl TokenType for usize {}
-
-//tt TokenTypeError
-/// A trait required of an error - a char that does not match any
-/// token parser rust return an error, and this trait requires that
-/// such an error be provided
-pub trait TokenTypeError<P: PosnInStream>: Sized + std::error::Error {
-    fn failed_to_parse(ch: char, stream: TextStreamSpan<P>) -> Self;
-}
-
+//a Errors and resultu
 //tp TokenParseResult
 /// The result of attempting to parse a token in a stream
 ///
@@ -80,9 +61,8 @@ impl<P> TokenTypeError<P> for TokenParseError<P>
 where
     P: PosnInStream + std::fmt::Display,
 {
-    fn failed_to_parse(ch: char, stream: TextStreamSpan<P>) -> Self {
+    fn failed_to_parse(ch: char, pos:Pos<P>) -> Self {
         let s = format!("Failed to parse: unexpected char '{}'", ch);
-        let pos = stream.pos();
         Self { s, pos }
     }
 }
@@ -277,7 +257,7 @@ where
                     return Ok(result);
                 }
             }
-            return Err(E::failed_to_parse(ch, self));
+            return Err(E::failed_to_parse(ch, self.pos()));
         }
         Ok(None)
     }

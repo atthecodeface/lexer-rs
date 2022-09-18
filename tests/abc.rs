@@ -34,7 +34,7 @@ impl std::fmt::Display for AbcTokenStreamError {
 }
 impl std::error::Error for AbcTokenStreamError {}
 impl TokenTypeError<Pos> for AbcTokenStreamError {
-    fn failed_to_parse(_: char, _: TextStreamSpan<'_, Pos>) -> Self {
+    fn failed_to_parse(_: char, _: lexer::Pos<Pos>) -> Self {
         todo!()
     }
 }

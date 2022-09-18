@@ -27,8 +27,8 @@ impl std::error::Error for LexError {}
 
 //ip TokenTypeError for LexError
 impl TokenTypeError<LineCol> for LexError {
-    fn failed_to_parse(ch: char, t: TextStreamSpan<LineCol>) -> Self {
-        Self::BadChar(ch, t.pos().pos())
+    fn failed_to_parse(ch: char, pos: lexer::Pos<LineCol>) -> Self {
+        Self::BadChar(ch, pos.pos())
     }
 }
 
