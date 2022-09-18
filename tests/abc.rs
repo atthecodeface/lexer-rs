@@ -6,7 +6,7 @@ use lexer::{TokenParseError, TokenTypeError};
 
 //a Pos
 //tp Pos
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash)]
 struct Pos(());
 
 //ip TextPos of Pos
@@ -151,9 +151,9 @@ impl<'parser> AbcParser<'parser> {
         let at_least_one_a = Box::new(parser_fn::count_of(|t| (t == 'a'), 1..1000));
         let some_bs = Box::new(parser_fn::count_of(|t| (t == 'b'), 0..1000));
         let at_least_one_c = Box::new(parser_fn::count_of(|t| (t == 'c'), 1..1000));
-        let grammar1 = Box::new(parser_fn::success((0_usize, 0_usize, 0_usize)));
-        let grammar2 = Box::new(parser_fn::success((0_usize, 0_usize, 0_usize)));
-        let either_grammar = Box::new(parser_fn::success((0_usize, 0_usize, 0_usize)));
+        let grammar1 = Box::new(parser_fn::success(|| (0_usize, 0_usize, 0_usize)));
+        let grammar2 = Box::new(parser_fn::success(|| (0_usize, 0_usize, 0_usize)));
+        let either_grammar = Box::new(parser_fn::success(|| (0_usize, 0_usize, 0_usize)));
         let mut parser = Box::pin(AbcParser {
             at_least_one_a,
             some_bs,

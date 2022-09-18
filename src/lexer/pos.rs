@@ -4,7 +4,7 @@ use std::ops::Range;
 //a TextPos
 /// Trait for location within a file
 pub trait TextPos:
-    Sized + std::fmt::Debug + std::fmt::Display + Copy + std::default::Default
+    Sized + std::fmt::Debug + std::fmt::Display + Copy + std::default::Default + PartialEq + Eq + std::hash::Hash
 {
     fn advance_cols(&mut self, _num_chars: usize) {}
     fn advance_line(&mut self) {}
@@ -16,7 +16,7 @@ impl TextPos for u8 {}
 //a LineCol
 //tp LineCol
 /// A line + column within a text stream
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub struct LineCol {
     line: usize,
     column: usize,
@@ -29,6 +29,7 @@ impl std::default::Default for LineCol {
     }
 }
 
+//ip Display for LineCol
 impl std::fmt::Display for LineCol {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(fmt, "line {} column {}", self.line, self.column)
@@ -48,7 +49,7 @@ impl TextPos for LineCol {
 
 //a Pos
 //tp Pos
-#[derive(Debug, Default, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Hash)]
 pub struct Pos<P>
 where
     P: TextPos,

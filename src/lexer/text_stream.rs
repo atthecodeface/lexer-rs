@@ -60,7 +60,7 @@ pub type TokenParser<'a, P, T, E> =
 /// An error in parsing a token - most often an 'unrecognized character'
 ///
 /// P : TextPos
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TokenParseError<P>
 where
     P: TextPos,
