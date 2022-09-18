@@ -229,6 +229,45 @@ where
     }
 }
 
+//a Impl Lexer
+use crate::{Lexer, LexerError, LexerParseFn, LexerParseResult, LexerState};
+use std::marker::PhantomData;
+#[derive (Debug)]
+struct TSSLexer<'a, P, T, E>
+where
+        P: PosnInCharStream,
+    {
+    tss: TextStreamSpan<'a, P>,
+    _phantom_token: PhantomData<&'a T>,
+    _phantom_error: PhantomData<&'a E>,
+    }
+impl <'a, P, T, E> Lexer for TSSLexer<'a, P, T, E> 
+where
+    P: PosnInCharStream + LexerState,
+    T: TokenType,
+    E: LexerError<Self>,
+{
+    type Token = T;
+    type Error = E;
+    type State = P;
+    fn parse(&self,
+             state: P,
+             parsers: &[LexerParseFn<Self>],
+    ) -> LexerParseResult<Self> {
+        if let Some(ch) = self.tss.peek() {
+            for p in parsers {
+                let result = p(&self, state, ch)?;
+                if result.is_some() {
+                    return Ok(result);
+                }
+            }
+            return Err(E::failed_to_parse(&self, state, ch));
+        }
+        Ok(None)
+    }
+}
+
+//a Old iterator
 //tp TextStreamSpanIterator
 /// An iterator over a TextStream presenting the parsed Tokens from it
 pub struct TextStreamSpanIterator<'a, P, T, E>

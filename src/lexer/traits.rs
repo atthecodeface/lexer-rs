@@ -54,13 +54,12 @@ impl PosnInCharStream for usize {
 }
 
 //a Stuff
-pub trait LexerState<P> : Sized + Copy + std::fmt::Debug {
+pub trait LexerState : Sized + Copy + std::fmt::Debug {
 }
 pub trait Lexer : std::fmt::Debug {
-    type Posn;
     type Token : TokenType;
-    type State: LexerState<Self::Posn>;
-    type Error: TokenTypeError<Self::Posn>;
+    type State: LexerState;
+    type Error: LexerError<Self>;
     fn parse(&self,
              state: Self::State,
              parsers: &[LexerParseFn<Self>],
@@ -70,7 +69,10 @@ pub type LexerParseResult<L> = Result<Option<(<L as Lexer>::State,
                                               <L as Lexer>::Token)>,
                                       <L as Lexer>::Error>;
 pub type LexerParseFn<L> =
-    fn(char, <L as Lexer>::State) -> LexerParseResult<L>;
+    fn(lexer:&L, <L as Lexer>::State, char) -> LexerParseResult<L>;
+pub trait LexerError<L:Lexer + ?Sized>: Sized + std::error::Error {
+    fn failed_to_parse(lexer:&L, state:<L as Lexer>::State, ch:char) -> Self;
+}
 
 //a Tokens
 //tt TokenType

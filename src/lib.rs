@@ -10,7 +10,7 @@ pub use crate::lexer::{
     TextStreamSpan, TextStreamSpanIterator, TokenParseError, TokenParseResult, TokenParser,
     TokenType, TokenTypeError,
 };
-pub use crate::lexer::{LexerState, LexerParseFn, LexerParseResult, Lexer};
+pub use crate::lexer::{LexerError, LexerState, LexerParseFn, LexerParseResult, Lexer};
 pub use crate::lexer::{ParserIterator};
 
 pub use parser::{ParseFnResult, ParseResult};
