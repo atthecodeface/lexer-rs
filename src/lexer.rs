@@ -15,6 +15,6 @@ pub use simple::{SimpleKeyword, SimpleToken};
 pub use stream_char_pos::StreamCharPos;
 pub use stream_char_span::StreamCharSpan;
 pub use token_parse_error::{TokenParseError};
-pub use text_stream::{TextStreamSpan, TextStreamSpanIterator, TokenParser, TokenParseResult, TSSLexer};
+pub use text_stream::{TextStreamSpan, TokenParser, TokenParseResult, TSSLexer};
 pub use traits::{PosnInCharStream, PosnInStream, TokenType, TokenTypeError};
-pub use traits::{LexerError, LexerParseFn, LexerParseResult, Lexer};
+pub use traits::{LexerError, LexerParseFn, LexerParseResult, Lexer, LexerOfChar};

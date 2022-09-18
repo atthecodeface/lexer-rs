@@ -1,3 +1,4 @@
+use crate::StreamCharSpan;
 //a PosnIn traits
 //tt PosnInStream
 /// Trait for location within a stream
@@ -38,7 +39,7 @@ pub trait PosnInCharStream: PosnInStream {
     fn byte_ofs(&self) -> usize;
 }
 
-//ip PosnInCharStream for usize
+//ip PosnInStream for usize
 impl PosnInStream for usize {
     fn advance_cols(self, byte_ofs: usize, _num_chars: usize) -> Self {
         self + byte_ofs
@@ -47,15 +48,15 @@ impl PosnInStream for usize {
         self + byte_ofs
     }
 }
+
+//ip PosnInCharStream for usize
 impl PosnInCharStream for usize {
     fn byte_ofs(&self) -> usize {
         *self
     }
 }
 
-//a Stuff
-pub trait OldLexerState : Sized + Copy + std::fmt::Debug {
-}
+//a Lexer etc
 pub trait Lexer : std::fmt::Debug {
     type Token : TokenType;
     type State: Sized + Copy + std::fmt::Debug;
@@ -65,6 +66,26 @@ pub trait Lexer : std::fmt::Debug {
              parsers: &[LexerParseFn<Self>],
     ) -> LexerParseResult<Self>;
 }
+// Requires Lexer::State : PosnInCharStream> 
+pub trait LexerOfChar : Lexer {
+    fn do_while<F: Fn(usize, char) -> bool>(
+        &self,
+        state: Self::State,
+        ch: char,
+        f: &F,
+    ) -> (Self::State, Option<(Self::State, usize)>);
+    fn range_as_bytes(&self, ofs: usize, n: usize) -> &[u8];
+    fn get_text_span(&self, span: &StreamCharSpan<Self::State>) -> &str where <Self as Lexer>::State: PosnInCharStream;
+    fn get_text(&self, start: Self::State, end:Self::State) -> &str;
+    fn consume_ascii_str(&self, state: Self::State, s: &str) -> Self::State;
+    fn consume_char(&self, state: Self::State, ch: char) -> Self::State;
+    fn consumed_newline(&self, state: Self::State, num_bytes:usize) -> Self::State;
+    fn consumed_chars(&self, state: Self::State, num_bytes:usize, num_chars: usize) -> Self::State;
+    fn matches(&self, state: &Self::State, s: &str) -> bool;
+    fn matches_bytes(&self, state:&Self::State, s: &[u8]) -> bool;
+    fn peek_at(&self, state:&Self::State) -> Option<char>;
+}
+
 pub type LexerParseResult<L> = Result<Option<(<L as Lexer>::State,
                                               <L as Lexer>::Token)>,
                                       <L as Lexer>::Error>;

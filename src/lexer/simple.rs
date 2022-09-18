@@ -1,7 +1,7 @@
 //a Imports
 use crate::{
     PosnInCharStream, StreamCharSpan, TextStreamSpan, TokenParseResult, TokenType,
-    TokenTypeError,
+    TokenTypeError, Lexer, LexerParseResult, LexerOfChar,
 };
 
 //a SimpleToken
@@ -53,74 +53,86 @@ where
     K: SimpleKeyword,
 {
     //fp parse_char
-    pub fn parse_char<E: TokenTypeError<P>>(
+    pub fn parse_char<'a, L>(
+        stream: &L,
+        state: L::State,
         ch: char,
-        byte_ofs: usize,
-        stream: TextStreamSpan<P>,
-    ) -> TokenParseResult<P, Self, E> {
-        let pos = stream.pos();
+    ) -> LexerParseResult<L>
+    where L: LexerOfChar,
+          L: Lexer<Token = Self, State = P>,
+    {
+        let pos = state;
         match ch {
             '\n' => Ok(Some((
-                stream.consumed_newline(byte_ofs + 1),
+                stream.consumed_newline(state, 1),
                 Self::Newline(pos),
             ))),
             '(' | '[' | '{' => Ok(Some((
-                stream.consumed_chars(byte_ofs + 1, 1),
+                stream.consumed_chars(state, 1, 1),
                 Self::OpenBra(pos, ch),
             ))),
             ')' | ']' | '}' => Ok(Some((
-                stream.consumed_chars(byte_ofs + 1, 1),
+                stream.consumed_chars(state, 1, 1),
                 Self::CloseBra(pos, ch),
             ))),
             ch => Ok(Some((
-                stream.consume_char(byte_ofs, ch),
+                stream.consume_char(state, ch),
                 Self::Char(pos, ch),
             ))),
         }
     }
 
     //fp parse_comment_line
-    pub fn parse_comment_line<E: TokenTypeError<P>>(
+    pub fn parse_comment_line<'a, L>(
+        stream: &L,
+        state: L::State,
         ch: char,
-        byte_ofs: usize,
-        stream: TextStreamSpan<P>,
-    ) -> TokenParseResult<P, Self, E> {
-        match stream.do_while(ch, byte_ofs, &|n, ch| {
+    ) -> LexerParseResult<L>
+    where L: LexerOfChar,
+          L: Lexer<Token = Self, State = P>,
+    {
+        match stream.do_while(state, ch, &|n, ch| {
             ((n < 2) && (ch == '/')) || ((n >= 2) && ch != '\n')
         }) {
-            (stream, Some((pos, _n))) => {
-                let span = StreamCharSpan::new(pos, stream.pos());
-                Ok(Some((stream, SimpleToken::CommentLine(span))))
+            (state, Some((start, _n))) => {
+                let span = StreamCharSpan::new(start, state);
+                Ok(Some((state, SimpleToken::CommentLine(span))))
             }
             (_, None) => Ok(None),
         }
     }
 
     //fp parse_digits
-    pub fn parse_digits<E: TokenTypeError<P>>(
+    pub fn parse_digits<'a, L>(
+        stream: &L,
+        state: L::State,
         ch: char,
-        byte_ofs: usize,
-        stream: TextStreamSpan<P>,
-    ) -> TokenParseResult<P, Self, E> {
-        match stream.do_while(ch, byte_ofs, &|_, ch| ch.is_ascii_digit()) {
-            (stream, Some((pos, _n))) => {
-                let span = StreamCharSpan::new(pos, stream.pos());
-                Ok(Some((stream, SimpleToken::Digits(span))))
+    ) -> LexerParseResult<L>
+    where L: LexerOfChar,
+          L: Lexer<Token = Self, State = P>,
+    {
+        match stream.do_while(state, ch, &|_, ch| ch.is_ascii_digit()) {
+            (state, Some((start, _n))) => {
+                let span = StreamCharSpan::new(start, state);
+                Ok(Some((state, SimpleToken::Digits(span))))
             }
             (_, None) => Ok(None),
         }
     }
 
     //fp parse_whitespace
-    pub fn parse_whitespace<E: TokenTypeError<P>>(
+    pub fn parse_whitespace<'a, L>(
+        stream: &L,
+        state: L::State,
         ch: char,
-        byte_ofs: usize,
-        stream: TextStreamSpan<P>,
-    ) -> TokenParseResult<P, Self, E> {
-        match stream.do_while(ch, byte_ofs, &|_, ch| (ch == ' ' || ch == '\t')) {
-            (stream, Some((pos, _))) => {
-                let span = StreamCharSpan::new(pos, stream.pos());
-                Ok(Some((stream, SimpleToken::Whitespace(span))))
+    ) -> LexerParseResult<L>
+    where L: LexerOfChar,
+          L: Lexer<Token = Self, State = P>,
+    {
+        match stream.do_while(state, ch, &|_, ch| (ch == ' ' || ch == '\t')) {
+            (state, Some((start, _))) => {
+                let span = StreamCharSpan::new(start, state);
+                Ok(Some((state, SimpleToken::Whitespace(span))))
             }
             (_, None) => Ok(None),
         }
@@ -146,18 +158,20 @@ where
     }
 
     //fp parse_keyword
-    pub fn parse_keyword<'a, E: TokenTypeError<P>>(
+    pub fn parse_keyword<L>(
+        stream: &L,
+        state: L::State,
         _ch: char,
-        byte_ofs: usize,
-        mut stream: TextStreamSpan<'a, P>,
         keywords: &[(&[u8], K)],
-    ) -> TokenParseResult<'a, P, Self, E> {
+    ) -> LexerParseResult<L>
+    where L: LexerOfChar,
+          L: Lexer<Token = Self, State = P>,
+    {
         for (k, v) in keywords {
-            if stream.matches_bytes(byte_ofs, k) {
+            if stream.matches_bytes(&state, k) {
                 let n = k.len();
-                let pos = stream.pos();
-                stream = stream.consumed_chars(byte_ofs + n, n);
-                return Ok(Some((stream, SimpleToken::Keyword(pos, *v))));
+                let next_state = stream.consumed_chars(state, n, n);
+                return Ok(Some((next_state, SimpleToken::Keyword(state, *v))));
             }
         }
         Ok(None)
