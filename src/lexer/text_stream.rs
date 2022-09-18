@@ -1,7 +1,7 @@
 //a Imports
 use std::ops::Range;
 
-use crate::{PosnInCharStream, StreamCharSpan, TokenParseError, TokenType, TokenTypeError};
+use crate::{PosnInCharStream, StreamCharSpan, TokenType, TokenTypeError};
 
 //a TokenParseResult
 //tp TokenParseResult
@@ -68,11 +68,11 @@ where
         self.pos
     }
 
-    //mp as_bytes
+    //mp range_as_bytes
     /// Borrow some bytes of the stream from an offset
     ///
     /// Return None if the bytes are out of range
-    pub fn as_bytes(&self, ofs: usize, n: usize) -> &[u8] {
+    pub fn range_as_bytes(&self, ofs: usize, n: usize) -> &[u8] {
         assert!(ofs + n <= self.text.len());
         &self.text.as_bytes()[ofs..ofs + n]
     }
@@ -80,25 +80,20 @@ where
     //mp get_text_of_range
     /// Get the text between a start and end byte offset
     ///
-    /// Safety : The byte offsets must correspond to utf8 character points
+    /// # Safety
+    ///
+    /// The byte offsets must correspond to utf8 character points
     pub unsafe fn get_text_of_range(&self, range: Range<usize>) -> &str {
         self.text.get_unchecked(range)
     }
 
-    //mp old_get_text
-    /// Get all the text of this stream - from pos to end
-    ///
-    /// Safety : The StreamCharSpan has been provided by a parser and so the
-    /// byte offsets are indeed utf8 character boundaries
-    pub fn old_get_text(&self) -> &str {
-        unsafe { self.get_text_of_range(self.pos.byte_ofs()..self.end) }
-    }
-
     //mp get_text_span
-    /// Get the text of a [StreamCharSpan] provided by the parsers
+    /// Get the text of a [StreamCharSpan] provided by a parser
     ///
-    /// Safety : The StreamCharSpan has been provided by a parser and so the
-    /// byte offsets are indeed utf8 character boundaries
+    /// # Safety
+    ///
+    /// The [StreamCharSpan] must have been provided by a parser and
+    /// so the byte offsets are indeed utf8 character boundaries
     pub fn get_text_span(&self, span: StreamCharSpan<P>) -> &str {
         unsafe { self.get_text_of_range(span.byte_range()) }
     }
@@ -130,7 +125,7 @@ where
         if byte_ofs + n > self.end {
             false
         } else {
-            s == self.as_bytes(byte_ofs, n)
+            s == self.range_as_bytes(byte_ofs, n)
         }
     }
 
