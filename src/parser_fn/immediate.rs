@@ -22,12 +22,10 @@ where
 }
 
 //fp error
-pub fn error<P, I: ParserInputStream<P>, R, E>(
-    e: E,
-) -> impl Fn(I) -> ParseFnResult<P, R>
+pub fn error<P, I: ParserInputStream<P>, R, E>(e: E) -> impl Fn(I) -> ParseFnResult<P, R>
 where
     P: ParserInput<Stream = I>,
-    E : Fn() -> <P as ParserInput>::Error,
+    E: Fn() -> <P as ParserInput>::Error,
 {
     move |_stream| Err(e())
 }

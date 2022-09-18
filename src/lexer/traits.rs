@@ -14,8 +14,12 @@
 pub trait PosnInStream:
     Sized + std::fmt::Debug + Copy + std::default::Default + PartialEq + Eq + std::hash::Hash
 {
-    fn advance_cols(self, _byte_ofs: usize, _num_chars: usize) -> Self { self }
-    fn advance_line(self, _byte_ofs: usize) -> Self { self }
+    fn advance_cols(self, _byte_ofs: usize, _num_chars: usize) -> Self {
+        self
+    }
+    fn advance_line(self, _byte_ofs: usize) -> Self {
+        self
+    }
     fn error_fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         std::fmt::Debug::fmt(self, fmt)
     }
@@ -30,8 +34,7 @@ impl PosnInStream for () {}
 /// This tracks a byte offset within the stream so that strings can be
 /// retrieved from the stream. Byte offsets *must* always be on UTF8
 /// boundaries.
-pub trait PosnInCharStream: PosnInStream
-{
+pub trait PosnInCharStream: PosnInStream {
     fn byte_ofs(&self) -> usize;
 }
 
@@ -45,7 +48,9 @@ impl PosnInStream for usize {
     }
 }
 impl PosnInCharStream for usize {
-    fn byte_ofs(&self) -> usize {*self}
+    fn byte_ofs(&self) -> usize {
+        *self
+    }
 }
 
 //a Tokens
@@ -67,4 +72,3 @@ impl TokenType for usize {}
 pub trait TokenTypeError<P: PosnInCharStream>: Sized + std::error::Error {
     fn failed_to_parse(ch: char, pos: P) -> Self;
 }
-

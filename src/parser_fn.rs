@@ -15,13 +15,13 @@ mod immediate;
 pub use immediate::{error, fail, success};
 
 mod r#match;
-pub use r#match::{matches, count_of, list_of};
+pub use r#match::{count_of, list_of, matches};
 
 mod token;
-pub use token::{token_map, token_matches, token_count};
+pub use token::{token_count, token_map, token_matches};
 
 mod op;
-pub use op::{map, fold, option, not, or_else, unwrap_or_else};
+pub use op::{fold, map, not, option, or_else, unwrap_or_else};
 
 mod priority;
 pub use priority::{
@@ -51,4 +51,3 @@ pub use priority::{first_of_n_dyn_ref, first_of_n_dyn_ref_else};
 // separated_list
 //
 // list (min size, max size)
-

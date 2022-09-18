@@ -1,5 +1,8 @@
 //a Imports
-use crate::{StreamCharPos, StreamCharSpan, PosnInCharStream, TextStreamSpan, TokenParseResult, TokenType, TokenTypeError};
+use crate::{
+    PosnInCharStream, StreamCharPos, StreamCharSpan, TextStreamSpan, TokenParseResult, TokenType,
+    TokenTypeError,
+};
 
 //a SimpleToken
 //tt SimpleKeyword

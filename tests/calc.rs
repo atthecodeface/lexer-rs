@@ -1,13 +1,13 @@
 //a Imports
 use lexer::parser_fn;
 use lexer::{LineColumn, TokenType};
-use lexer::{ParseFnResult, ParserInput, ParserInputStream, ParseResult};
-use lexer::{StreamCharSpan, StreamCharPos, PosnInCharStream, TextStreamSpan};
+use lexer::{ParseFnResult, ParseResult, ParserInput, ParserInputStream};
+use lexer::{PosnInCharStream, StreamCharPos, StreamCharSpan, TextStreamSpan};
 use lexer::{TokenParseError, TokenTypeError};
 
 //a TextStream
 //tp TextStream
-/// 
+///
 type TextStream<'a> = TextStreamSpan<'a, StreamCharPos<LineColumn>>;
 
 //a LexError
@@ -59,11 +59,7 @@ type LexResult<'a> = Result<Option<(TextStream<'a>, Token)>, LexError>;
 //fi parse_char_fn
 /// Parser function to return a Token if it is a known one
 /// character token otherwise it returns None
-fn parse_char_fn<'a>(
-    ch: char,
-    byte_ofs: usize,
-    stream:  TextStream<'a>,
-) -> LexResult<'a>
+fn parse_char_fn<'a>(ch: char, byte_ofs: usize, stream: TextStream<'a>) -> LexResult<'a>
 where
     'a: 'a,
 {
@@ -104,11 +100,7 @@ where
 
 //fi parse_value_fn
 /// Parser function to return a Token if the text matches a value
-fn parse_value_fn<'a>(
-    ch: char,
-    byte_ofs: usize,
-    stream: TextStream<'a>,
-) -> LexResult<'a>
+fn parse_value_fn<'a>(ch: char, byte_ofs: usize, stream: TextStream<'a>) -> LexResult<'a>
 where
     'a: 'a,
 {
@@ -125,11 +117,7 @@ where
 
 //fi parse_whitespace_fn
 /// Parser function to return a Token if whitespace
-fn parse_whitespace_fn<'a>(
-    ch: char,
-    byte_ofs: usize,
-    stream: TextStream<'a>,
-) -> LexResult
+fn parse_whitespace_fn<'a>(ch: char, byte_ofs: usize, stream: TextStream<'a>) -> LexResult
 where
     'a: 'a,
 {
@@ -144,9 +132,7 @@ where
 
 //fi parse_keyword_fn
 /// Parser function to return a Token if whitespace
-fn parse_keyword_fn<'a>(_ch: char, byte_ofs: usize,
-    stream: TextStream<'a>,
-) -> LexResult
+fn parse_keyword_fn<'a>(_ch: char, byte_ofs: usize, stream: TextStream<'a>) -> LexResult
 where
     'a: 'a,
 {
@@ -172,13 +158,13 @@ impl<'a> TokenStream<'a> {
     }
 
     //mp get_id
-    fn get_id(&self, t:&Token) -> &str {
+    fn get_id(&self, t: &Token) -> &str {
         match t {
             Token::Id(s, n) => {
                 // Safety:
                 // If the token was 'gotten' correctly then
                 // its values indicate utf8 boundaries in the text
-                unsafe { self.0.get_text_of_range((*s)..(*s+*n)) }
+                unsafe { self.0.get_text_of_range((*s)..(*s + *n)) }
             }
             _ => {
                 panic!("Cannot get id from non-ID token");
@@ -212,10 +198,7 @@ impl<'a> ParserInputStream<TokenStream<'a>> for TokenStream<'a> {
             parse_value_fn,
             parse_char_fn,
         ];
-        Ok(self.0
-           .parse(parsers)?
-           .map(|(stream, t)| (Self(stream), t))
-        )
+        Ok(self.0.parse(parsers)?.map(|(stream, t)| (Self(stream), t)))
     }
 }
 
@@ -236,17 +219,18 @@ fn test_lex_0() {
 #[test]
 fn test_lex_1() {
     let mut ts = TokenStream::new("2() \t-\n+*/let;");
-    for exp_t in [ Token::Value(2.0),
-               Token::Open,
-               Token::Close,
-               Token::Whitespace,
-               Token::Op(Op::Minus),
-               Token::Whitespace,
-               Token::Op(Op::Plus),
-               Token::Op(Op::Times),
-               Token::Op(Op::Divide),
-               Token::Let,
-               Token::Semicolon,
+    for exp_t in [
+        Token::Value(2.0),
+        Token::Open,
+        Token::Close,
+        Token::Whitespace,
+        Token::Op(Op::Minus),
+        Token::Whitespace,
+        Token::Op(Op::Plus),
+        Token::Op(Op::Times),
+        Token::Op(Op::Divide),
+        Token::Let,
+        Token::Semicolon,
     ] {
         let (next_ts, t) = ts.get_token().unwrap().unwrap();
         assert_eq!(t, exp_t);
@@ -259,9 +243,8 @@ fn test_lex_1() {
 #[test]
 fn test_lex_ids() {
     let mut ts = TokenStream::new("x y _h");
-    for id in [ "x", "y", "_h"
-    ] {
-        let t  = {
+    for id in ["x", "y", "_h"] {
+        let t = {
             loop {
                 let (next_ts, t) = ts.get_token().unwrap().unwrap();
                 ts = next_ts;
@@ -273,7 +256,10 @@ fn test_lex_ids() {
         if let Token::Id(_s, _n) = &t {
             assert_eq!(ts.get_id(&t), id);
         } else {
-            panic!("Token should have been an ID of '{}' but it was {:?}", id, t);
+            panic!(
+                "Token should have been an ID of '{}' but it was {:?}",
+                id, t
+            );
         }
         dbg!(&ts);
     }
@@ -282,7 +268,7 @@ fn test_lex_ids() {
 }
 
 //a Scope
-struct Scope ();
+struct Scope();
 //a Op
 //tp Op
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -295,7 +281,7 @@ enum Op {
 
 //ip Op
 impl Op {
-    fn evaluate(&self, v1:f64, v2:f64) -> Result<f64, String> {
+    fn evaluate(&self, v1: f64, v2: f64) -> Result<f64, String> {
         match self {
             Self::Plus => Ok(v1 + v2),
             Self::Minus => Ok(v1 - v2),
@@ -327,13 +313,13 @@ enum Expr {
 
 //ip Expr
 impl Expr {
-    fn from_token(token:&Token) -> Option<Self> {
+    fn from_token(token: &Token) -> Option<Self> {
         match token {
             Token::Value(v) => Some(Expr::Value(*v)),
-            _ => None
+            _ => None,
         }
     }
-    fn evaluate(&self, scope:&Scope) -> Result<f64, String> {
+    fn evaluate(&self, scope: &Scope) -> Result<f64, String> {
         match self {
             Self::Value(v) => Ok(*v),
             Self::BinaryOp(o, e1, e2) => {
@@ -350,15 +336,14 @@ impl std::fmt::Display for Expr {
     fn fmt(&self, fmt: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
         match self {
             Expr::Value(v) => write!(fmt, "{}", v),
-            Expr::BinaryOp(o, e1, e2) => 
-                write!(fmt, "({}) {} ({})", e1, o, e2)
+            Expr::BinaryOp(o, e1, e2) => write!(fmt, "({}) {} ({})", e1, o, e2),
         }
     }
 }
 
 //a Parse functions
 //fi parse_eof
-fn parse_eof(input:TokenStream) -> ParseFnResult<TokenStream, ()> {
+fn parse_eof(input: TokenStream) -> ParseFnResult<TokenStream, ()> {
     if input.get_token()?.is_some() {
         Ok(ParseResult::Mismatched)
     } else {
@@ -367,23 +352,21 @@ fn parse_eof(input:TokenStream) -> ParseFnResult<TokenStream, ()> {
 }
 
 //fi parse_leaf
-fn parse_leaf(input:TokenStream) -> ParseFnResult<TokenStream, Expr> {
+fn parse_leaf(input: TokenStream) -> ParseFnResult<TokenStream, Expr> {
     let parse_value = parser_fn::token_map(|t| Expr::from_token(&t));
     let parse_bracketed = parser_fn::delimited(
-        parser_fn::matches(|t| matches!(t,Token::Open)),
+        parser_fn::matches(|t| matches!(t, Token::Open)),
         &parse_expr,
-        parser_fn::matches(|t| matches!(t,Token::Close)),
+        parser_fn::matches(|t| matches!(t, Token::Close)),
     );
     parser_fn::first_of_2(parse_value, parse_bracketed)(input)
 }
 
 //fi parse_binop_1
-fn parse_binop_1(input:TokenStream) -> ParseFnResult<TokenStream, Expr> {
+fn parse_binop_1(input: TokenStream) -> ParseFnResult<TokenStream, Expr> {
     parser_fn::fold(
         0,
-        |_n, v1, (o, v2)| {
-            Expr::BinaryOp(o, Box::new(v1), Box::new(v2))
-        },
+        |_n, v1, (o, v2)| Expr::BinaryOp(o, Box::new(v1), Box::new(v2)),
         &parse_leaf,
         parser_fn::pair(
             &parser_fn::token_map(|t| match t {
@@ -397,12 +380,10 @@ fn parse_binop_1(input:TokenStream) -> ParseFnResult<TokenStream, Expr> {
 }
 
 //fi parse_binop_2
-fn parse_binop_2(input:TokenStream) -> ParseFnResult<TokenStream, Expr> {
+fn parse_binop_2(input: TokenStream) -> ParseFnResult<TokenStream, Expr> {
     parser_fn::fold(
         0,
-        |_n, v1, (o, v2)| {
-            Expr::BinaryOp(o, Box::new(v1), Box::new(v2))
-        },
+        |_n, v1, (o, v2)| Expr::BinaryOp(o, Box::new(v1), Box::new(v2)),
         &parse_binop_1,
         parser_fn::pair(
             &parser_fn::token_map(|t| match t {
@@ -416,7 +397,7 @@ fn parse_binop_2(input:TokenStream) -> ParseFnResult<TokenStream, Expr> {
 }
 
 //fi parse_expr
-fn parse_expr(input:TokenStream) -> ParseFnResult<TokenStream, Expr> {
+fn parse_expr(input: TokenStream) -> ParseFnResult<TokenStream, Expr> {
     parse_binop_2(input)
 }
 
@@ -424,13 +405,9 @@ fn parse_expr(input:TokenStream) -> ParseFnResult<TokenStream, Expr> {
 #[test]
 fn parse_and_evaluate() {
     let parse_expr_eof =
-        parser_fn::unwrap_or_else(
-            parser_fn::succeeded_ref(
-                &parse_expr,
-                &parse_eof
-            ),
-            || LexError::Failure,
-    );
+        parser_fn::unwrap_or_else(parser_fn::succeeded_ref(&parse_expr, &parse_eof), || {
+            LexError::Failure
+        });
 
     let ts = TokenStream::new("1+2*3+4+(5+6)");
     let e = parse_expr_eof(ts).expect("Expression should parse cleanly");
@@ -443,10 +420,7 @@ fn parse_and_evaluate() {
     let ts = TokenStream::new("1+2*(4-3+2)+5+6");
     let e = parse_expr_eof(ts).expect("Expression should parse cleanly");
     assert_eq!(e.evaluate(&Scope()).unwrap(), 18.0);
-    
+
     let ts = TokenStream::new("1++2*(4-3+2)+5+6");
     assert_eq!(parse_expr_eof(ts).unwrap_err(), LexError::Failure);
-    
 }
-
-   

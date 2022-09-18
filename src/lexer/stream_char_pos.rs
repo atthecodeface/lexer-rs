@@ -1,5 +1,5 @@
 //a Imports
-use crate::{PosnInStream, PosnInCharStream};
+use crate::{PosnInCharStream, PosnInStream};
 
 //a StreamCharPos
 //tp StreamCharPos
@@ -52,10 +52,9 @@ where
 //ip Display for StreamCharPos
 impl<P> std::fmt::Display for StreamCharPos<P>
 where
-    P: PosnInStream
+    P: PosnInStream,
 {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         self.pos.error_fmt(fmt)
     }
 }
-

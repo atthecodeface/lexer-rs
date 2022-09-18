@@ -1,7 +1,7 @@
 //a Imports
 use std::ops::Range;
 
-use crate::{StreamCharPos, StreamCharSpan, PosnInCharStream, TokenType, TokenTypeError, };
+use crate::{PosnInCharStream, StreamCharPos, StreamCharSpan, TokenType, TokenTypeError};
 
 //a Errors and resultu
 //tp TokenParseResult
@@ -51,16 +51,13 @@ where
 }
 
 //ip Error for TokenParseError
-impl<P> std::error::Error for TokenParseError<P>
-where
-    P: PosnInCharStream,
-{}
+impl<P> std::error::Error for TokenParseError<P> where P: PosnInCharStream {}
 
 impl<P> TokenTypeError<P> for TokenParseError<P>
 where
     P: PosnInCharStream,
 {
-    fn failed_to_parse(ch: char, pos:P) -> Self {
+    fn failed_to_parse(ch: char, pos: P) -> Self {
         let s = format!("Failed to parse: unexpected char '{}'", ch);
         Self { s, pos }
     }

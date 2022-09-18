@@ -6,25 +6,21 @@ use crate::{ParseFnResult, ParseResult, ParserInput, ParserInputStream};
 //a count
 //fp matches
 ///
-pub fn matches<P, I: ParserInputStream<P>, F>(
-    f: F
-) -> impl Fn(I) -> ParseFnResult<P, ()>
+pub fn matches<P, I: ParserInputStream<P>, F>(f: F) -> impl Fn(I) -> ParseFnResult<P, ()>
 where
     P: ParserInput<Stream = I>,
     F: Fn(P::Token) -> bool,
 {
     use ParseResult::*;
-    move |mut input| {
-        match input.get_token()? {
-            Some((next_input, token)) => {
-                if f(token) {
-                    Ok(Matched(next_input, ()))
-                } else {
-                    Ok(Mismatched)
-                }
+    move |mut input| match input.get_token()? {
+        Some((next_input, token)) => {
+            if f(token) {
+                Ok(Matched(next_input, ()))
+            } else {
+                Ok(Mismatched)
             }
-            _ => Ok(Mismatched)
         }
+        _ => Ok(Mismatched),
     }
 }
 
