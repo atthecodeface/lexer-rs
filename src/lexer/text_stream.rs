@@ -126,12 +126,12 @@ where
         self.text.get_unchecked(range)
     }
 
-    //mp get_text
+    //mp old_get_text
     /// Get all the text of this stream - from pos to end
     ///
     /// Safety : The Span has been provided by a parser and so the
     /// byte offsets are indeed utf8 character boundaries
-    pub fn get_text(&self) -> &str {
+    pub fn old_get_text(&self) -> &str {
         unsafe { self.get_text_of_range(self.pos.byte_ofs()..self.end) }
     }
 

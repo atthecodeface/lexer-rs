@@ -1,6 +1,6 @@
 //a Imports
 use lexer::parser_fn;
-use lexer::{LineCol, TokenType};
+use lexer::{LineColumn, TokenType};
 use lexer::{ParseFnResult, ParserInput, ParserInputStream, ParseResult};
 use lexer::{Span, TextStreamSpan};
 use lexer::{TokenParseError, TokenTypeError};
@@ -9,8 +9,8 @@ use lexer::{TokenParseError, TokenTypeError};
 //tp LexError
 #[derive(Debug, Clone, PartialEq, Eq)]
 enum LexError {
-    Token(TokenParseError<LineCol>),
-    BadChar(char, LineCol),
+    Token(TokenParseError<LineColumn>),
+    BadChar(char, LineColumn),
     Failure,
     // Other(String),
 }
@@ -26,8 +26,8 @@ impl std::fmt::Display for LexError {
 impl std::error::Error for LexError {}
 
 //ip TokenTypeError for LexError
-impl TokenTypeError<LineCol> for LexError {
-    fn failed_to_parse(ch: char, pos: lexer::Pos<LineCol>) -> Self {
+impl TokenTypeError<LineColumn> for LexError {
+    fn failed_to_parse(ch: char, pos: lexer::Pos<LineColumn>) -> Self {
         Self::BadChar(ch, pos.pos())
     }
 }
@@ -49,7 +49,7 @@ impl TokenType for Token {}
 
 //a Lexical analysis functions
 //tp LexResult
-type LexResult<'a> = Result<Option<(TextStreamSpan<'a, LineCol>, Token)>, LexError>;
+type LexResult<'a> = Result<Option<(TextStreamSpan<'a, LineColumn>, Token)>, LexError>;
 
 //fi parse_char_fn
 /// Parser function to return a Token if it is a known one
@@ -57,7 +57,7 @@ type LexResult<'a> = Result<Option<(TextStreamSpan<'a, LineCol>, Token)>, LexErr
 fn parse_char_fn<'a>(
     ch: char,
     byte_ofs: usize,
-    stream: TextStreamSpan<'a, LineCol>,
+    stream: TextStreamSpan<'a, LineColumn>,
 ) -> LexResult<'a>
 where
     'a: 'a,
@@ -82,7 +82,7 @@ where
 
 //fi parse_id_fn
 /// Parser function to return a Token if the text matches an id
-fn parse_id_fn<'a>(ch: char, byte_ofs: usize, stream: TextStreamSpan<'a, LineCol>) -> LexResult
+fn parse_id_fn<'a>(ch: char, byte_ofs: usize, stream: TextStreamSpan<'a, LineColumn>) -> LexResult
 where
     'a: 'a,
 {
@@ -102,7 +102,7 @@ where
 fn parse_value_fn<'a>(
     ch: char,
     byte_ofs: usize,
-    stream: TextStreamSpan<'a, LineCol>,
+    stream: TextStreamSpan<'a, LineColumn>,
 ) -> LexResult<'a>
 where
     'a: 'a,
@@ -123,7 +123,7 @@ where
 fn parse_whitespace_fn<'a>(
     ch: char,
     byte_ofs: usize,
-    stream: TextStreamSpan<'a, LineCol>,
+    stream: TextStreamSpan<'a, LineColumn>,
 ) -> LexResult
 where
     'a: 'a,
@@ -139,7 +139,7 @@ where
 
 //fi parse_keyword_fn
 /// Parser function to return a Token if whitespace
-fn parse_keyword_fn<'a>(_ch: char, byte_ofs: usize, stream: TextStreamSpan<'a, LineCol>) -> LexResult
+fn parse_keyword_fn<'a>(_ch: char, byte_ofs: usize, stream: TextStreamSpan<'a, LineColumn>) -> LexResult
 where
     'a: 'a,
 {
@@ -155,7 +155,7 @@ where
 //tp TokenStream
 /// A stream of tokens
 #[derive(Debug, Clone, Copy)]
-struct TokenStream<'a>(TextStreamSpan<'a, LineCol>);
+struct TokenStream<'a>(TextStreamSpan<'a, LineColumn>);
 
 //ip TokenStream
 impl<'a> TokenStream<'a> {

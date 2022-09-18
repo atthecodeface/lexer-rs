@@ -3,40 +3,6 @@ use std::ops::Range;
 
 use crate::PosnInStream;
 
-//a LineCol
-//tp LineCol
-/// A line + column within a text stream
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub struct LineCol {
-    line: usize,
-    column: usize,
-}
-
-//ip Default for LineCol
-impl std::default::Default for LineCol {
-    fn default() -> Self {
-        Self { line: 1, column: 1 }
-    }
-}
-
-//ip Display for LineCol
-impl std::fmt::Display for LineCol {
-    fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        write!(fmt, "line {} column {}", self.line, self.column)
-    }
-}
-
-//ip PosnInStream for LineCol
-impl PosnInStream for LineCol {
-    fn advance_cols(&mut self, num_chars: usize) {
-        self.column += num_chars;
-    }
-    fn advance_line(&mut self) {
-        self.column = 1;
-        self.line += 1;
-    }
-}
-
 //a Pos
 //tp Pos
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Hash)]

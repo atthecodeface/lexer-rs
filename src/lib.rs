@@ -4,7 +4,7 @@ mod lexer;
 mod parser;
 pub mod parser_fn;
 
-pub use crate::lexer::{LineCol, Pos, Span, PosnInStream};
+pub use crate::lexer::{LineColumn, Pos, Span, PosnInStream};
 pub use crate::lexer::{SimpleKeyword, SimpleToken};
 pub use crate::lexer::{
     TextStreamSpan, TextStreamSpanIterator, TokenParseError, TokenParseResult, TokenParser,
