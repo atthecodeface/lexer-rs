@@ -1,8 +1,9 @@
 //a Imports
 use lexer::parser_fn;
 use lexer::{ParseFnResult, ParserInput, ParserInputStream};
-use lexer::{TextStreamSpan};
-use lexer::{TokenParseError, TokenTypeError};
+use lexer::{TokenParseError, TokenTypeError, TSSLexer, LexerParseResult, LexerError, Lexer, LexerOfChar};
+
+type AbcLexer<'a> = TSSLexer<'a, Pos, char, AbcTokenStreamError>;
 
 //a Pos
 //tp Pos
@@ -27,6 +28,11 @@ impl TokenTypeError<Pos> for AbcTokenStreamError {
         todo!()
     }
 }
+impl <'a> LexerError<AbcLexer<'a>> for AbcTokenStreamError {
+    fn failed_to_parse(L:&AbcLexer, _:Pos,_: char) -> Self {
+        todo!()
+    }
+}
 impl From<TokenParseError<Pos>> for AbcTokenStreamError {
     fn from(_: TokenParseError<Pos>) -> Self {
         todo!()
@@ -37,7 +43,8 @@ impl From<TokenParseError<Pos>> for AbcTokenStreamError {
 /// A stream of tokens of a, b or c
 #[derive(Debug, Copy, Clone)]
 struct AbcTokenStream<'a> {
-    stream: TextStreamSpan<'a, Pos>,
+    stream: &'a AbcLexer<'a>,
+    pos: Pos,
 }
 
 //ip ParserInput for AbcTokenStream
@@ -53,12 +60,12 @@ impl<'a> AbcTokenStream<'a> {
     //fi parse_char_fn
     /// Parser function to return a Token (== char) if it is one of a-c; otherwise it returns None
     fn parse_char_fn(
+        stream: &AbcLexer<'a>,
+        state: Pos,
         ch: char,
-        byte_ofs: usize,
-        stream: TextStreamSpan<Pos>,
-    ) -> Result<Option<(TextStreamSpan<Pos>, char)>, TokenParseError<Pos>> {
+    ) -> LexerParseResult<AbcLexer<'a>> {
         if ('a'..='c').contains(&ch) {
-            Ok(Some((stream.consume_char(byte_ofs, ch), ch)))
+            Ok(Some((stream.consume_char(state, ch), ch)))
         } else {
             Ok(None)
         }
@@ -71,8 +78,8 @@ impl<'a> ParserInputStream<AbcTokenStream<'a>> for AbcTokenStream<'a> {
     fn get_token(&self) -> Result<Option<(Self, char)>, AbcTokenStreamError> {
         Ok(self
             .stream
-            .parse(&[Self::parse_char_fn])?
-            .map(|(stream, t)| (Self { stream }, t)))
+            .parse(self.pos, &[Self::parse_char_fn])?
+            .map(|(pos, t)| (Self { stream:self.stream, pos:pos }, t)))
     }
 }
 
@@ -176,16 +183,19 @@ impl<'parser> AbcParser<'parser> {
         );
         parser
     }
-    fn do_test(&self, s: &str) {
-        let ps = unsafe { std::mem::transmute::<&str, &'static str>(s) };
-        let stream = TextStreamSpan::new(ps);
-        let abcs = AbcTokenStream { stream };
+    fn do_test<'a>(&self, s: &'a str)
+        where 'a: 'parser
+    {
+        let ps = s;
+        // let ps = unsafe { std::mem::transmute::<&str, &'static str>(s) };
+        let stream = AbcLexer::new(ps);
+        let abcs = AbcTokenStream { stream:&stream, pos:Pos::default() };
 
         println!("{:?}", (*self.at_least_one_a)(abcs));
         println!("{:?}", (*self.grammar1)(abcs));
         println!("{:?}", (*self.grammar2)(abcs));
         println!("{:?}", (*self.either_grammar)(abcs));
-        drop(stream);
+        // drop(stream);
     }
 }
 
@@ -198,9 +208,10 @@ fn test_me() {
     let abc_parser = AbcParser::new();
     {
         do_test(&abc_parser, "abc");
-        do_test(&abc_parser, "abbbbbc");
+/*        do_test(&abc_parser, "abbbbbc");
         do_test(&abc_parser, "cba");
         do_test(&abc_parser, &format!("cba"));
+*/
     }
     // assert!(false);
 }

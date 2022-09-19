@@ -27,6 +27,7 @@ where 'a: 'a
 }
 
 //a Tests
+    /*
 #[test]
 fn test_me() {
     let a = r##"let add x y = x + y; add 2 3
@@ -34,7 +35,6 @@ fn test_me() {
 
     let span = L::new(a);
 
-    /*
     // Note must use closures here as Rust cannot resolve the lifetimes of the functions otherwise
     let parsers = [
         |l, state, c| Token::parse_digits(l, state, c),
@@ -43,9 +43,6 @@ fn test_me() {
         parse_id,
         |l, state, c| Token::parse_char(l, state, c),
     ];
-*/
-
-
     let parsers = [];
     for t in span.iter_tokens(&parsers) {
         println!("{:?}", t.unwrap());
@@ -53,3 +50,4 @@ fn test_me() {
     }
     // assert!(false);
 }
+*/

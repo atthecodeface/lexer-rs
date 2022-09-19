@@ -1,6 +1,6 @@
 //a Imports
 use crate::{
-    PosnInCharStream, StreamCharSpan, TextStreamSpan, TokenParseResult, TokenType,
+    PosnInCharStream, StreamCharSpan, TokenType,
     TokenTypeError, Lexer, LexerParseResult, LexerOfChar,
 };
 
@@ -139,19 +139,24 @@ where
     }
 
     //fp parse_id
-    pub fn parse_id<E: TokenTypeError<P>, F1: Fn(char) -> bool, F2: Fn(char) -> bool>(
+    pub fn parse_id<'a, L, F1, F2>(
+        stream: &L,
+        state: L::State,
         ch: char,
-        byte_ofs: usize,
-        stream: TextStreamSpan<P>,
         is_id_start: F1,
         is_id: F2,
-    ) -> TokenParseResult<P, Self, E> {
-        match stream.do_while(ch, byte_ofs, &|n, ch| {
+    ) -> LexerParseResult<L>
+    where L: LexerOfChar,
+          L: Lexer<Token = Self, State = P>,
+          F1: Fn(char) -> bool,
+          F2: Fn(char) -> bool    
+    {
+        match stream.do_while(state, ch, &|n, ch| {
             (n == 0 && is_id_start(ch)) || ((n > 0) && is_id(ch))
         }) {
-            (stream, Some((pos, _))) => {
-                let span = StreamCharSpan::new(pos, stream.pos());
-                Ok(Some((stream, SimpleToken::Id(span))))
+            (state, Some((start, _))) => {
+                let span = StreamCharSpan::new(start, state);
+                Ok(Some((state, SimpleToken::Id(span))))
             }
             (_, None) => Ok(None),
         }
