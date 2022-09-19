@@ -1,41 +1,43 @@
 //a Imports
-use crate::{Lexer, LexerError, PosnInCharStream};
+use crate::{Lexer, LexerError, PosnInCharStream, PosnInStream};
 
-//a TokenParseError
-//tp TokenParseError
+//a LexerParseError
+//tp LexerParseError
 /// A simple implementation of a type supporting TokenTypeError
 ///
 /// An error in parsing a token - most often an 'unrecognized character'
 ///
 /// P : PosnInCharStream
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct TokenParseError<P>
+pub struct LexerParseError<P>
 where
-    P: PosnInCharStream,
+    P : PosnInCharStream,
 {
     ch: char,
     pos: P,
 }
 
-//ip Error for TokenParseError
-impl<P> std::error::Error for TokenParseError<P> where P: PosnInCharStream {}
-
-//ip LexerError for TokenParseError
-impl<L, P> LexerError<L> for TokenParseError<P>
+//ip Error for LexerParseError
+impl<P> std::error::Error for LexerParseError<P>
 where
-    L: Lexer<State = P, Error = TokenParseError<P>>,
-    P: PosnInCharStream,
+    P : PosnInCharStream,
 {
-    fn failed_to_parse(_lexer: &L, state: P, ch: char) -> Self {
-        let pos = state;
+}
+
+//ip LexerError for LexerParseError
+impl<P> LexerError<P> for  LexerParseError<P>
+where
+    P : PosnInCharStream,
+{
+    fn failed_to_parse(pos: P, ch: char) -> Self {
         Self { ch, pos }
     }
 }
 
-//ip Display for TokenParseError
-impl<P> std::fmt::Display for TokenParseError<P>
+//ip Display for LexerParseError
+impl<P> std::fmt::Display for  LexerParseError<P>
 where
-    P: PosnInCharStream,
+    P : PosnInCharStream,
 {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(fmt, "Failed to parse: unexpected char '{}' at ", self.ch)?;

@@ -1,8 +1,8 @@
 //a Imports
 use lexer::LineColumn;
 use lexer::StreamCharPos;
-use lexer::TokenParseError;
-use lexer::{LexerParseResult, TSSLexer};
+use lexer::LexerParseError;
+use lexer::{LexerParseResult, TSSLexer, LexerOfChar};
 
 //a CalcOp
 //tp CalcOp
@@ -56,19 +56,20 @@ type TextPos = StreamCharPos<LineColumn>;
 
 //tp TextStream
 ///
-type TextStream<'a> = TSSLexer<'a, TextPos, CalcToken, TokenParseError<TextPos>>;
+type TextStream<'a> = TSSLexer<'a, TextPos, CalcToken, LexerParseError<TextPos>>;
 
-//a Lexical analysis functions
+//a CalcLexResult
 //tp CalcLexResult
 // type CalcLexResult = Result<Option<(TPos, Token)>, LexError>;
-type CalcLexResult<'a> = LexerParseResult<TextStream<'a>>;
+type CalcLexResult<'a> = LexerParseResult<TextPos, CalcToken, LexerParseError<TextPos>>;
 
+//a Lexical analysis functions
 //fi parse_char_fn
 /// Parser function to return a Token if it is a known one
 /// character token otherwise it returns None
 fn parse_char_fn<'a>(stream: &TextStream<'a>, state: TextPos, ch: char) -> CalcLexResult<'a>
-where
-    'a: 'a,
+ where
+     'a: 'a,
 {
     if let Some(t) = {
         match ch {
@@ -78,7 +79,6 @@ where
             '/' => Some(CalcToken::Op(CalcOp::Divide)),
             '(' => Some(CalcToken::Open),
             ')' => Some(CalcToken::Close),
-            ';' => Some(CalcToken::Semicolon),
             _ => None,
         }
     } {
@@ -97,7 +97,7 @@ where
     let is_digit = |_, ch| ('0'..='9').contains(&ch);
     let (state, opt_x) = stream.do_while(state, ch, &is_digit);
     if let Some((start, _n)) = opt_x {
-        let s = stream.tss.get_text(start, state);
+        let s = stream.get_text(start, state);
         let value: f64 = s.parse().unwrap();
         Ok(Some((state, CalcToken::Value(value))))
     } else {
@@ -120,6 +120,7 @@ where
     }
 }
 
+
 //a Lexical analyzer tests
 #[test]
 fn test_lex_0() {
@@ -136,7 +137,7 @@ fn test_lex_0() {
 
 #[test]
 fn test_lex_1() {
-    let mut ts = TokenStream::new("2() \t-\n+*/");
+    let mut ts = TokenStream::new("2() \t-\n*+/");
     for exp_t in [
         CalcToken::Value(2.0),
         CalcToken::Open,
@@ -144,8 +145,8 @@ fn test_lex_1() {
         CalcToken::Whitespace,
         CalcToken::Op(Op::Minus),
         CalcToken::Whitespace,
-        CalcToken::Op(Op::Plus),
         CalcToken::Op(Op::Times),
+        CalcToken::Op(Op::Plus),
         CalcToken::Op(Op::Divide),
     ] {
         let (next_ts, t) = ts.get_token().unwrap().unwrap();

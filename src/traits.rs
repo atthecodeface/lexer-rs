@@ -61,8 +61,8 @@ impl PosnInCharStream for usize {
 pub trait Lexer: std::fmt::Debug {
     type Token: Sized + std::fmt::Debug + Copy;
     type State: Sized + Copy + std::fmt::Debug;
-    type Error: LexerError<Self>;
-    fn parse(&self, state: Self::State, parsers: &[LexerParseFn<Self>]) -> LexerParseResult<Self>;
+    type Error: LexerError<Self::State>;
+    fn parse(&self, state: Self::State, parsers: &[LexerParseFn<Self>]) -> LexerParseResult<Self::State, Self::Token, Self::Error>;
 }
 
 //tt LexerOfChar
@@ -90,15 +90,23 @@ pub trait LexerOfChar: Lexer {
 }
 
 //tp LexerParseResult
-pub type LexerParseResult<L> =
-    Result<Option<(<L as Lexer>::State, <L as Lexer>::Token)>, <L as Lexer>::Error>;
+// pub type LexerParseResult<L> =
+//     Result<Option<(<L as Lexer>::State, <L as Lexer>::Token)>, <L as Lexer>::Error>;
+pub type LexerParseResult<S, T, E> =
+    Result<Option<(S, T)>, E>;
+
 //tp LexerParseFn
-pub type LexerParseFn<L> = fn(lexer: &L, <L as Lexer>::State, char) -> LexerParseResult<L>;
+pub type LexerParseFn<L> = fn(lexer: &L, <L as Lexer>::State, char) -> LexerParseResult<<L as Lexer>::State, <L as Lexer>::Token, <L as Lexer>::Error>;
 
 //tt LexerError
 /// A trait required of an error - a char that does not match any
 /// token parser rust return an error, and this trait requires that
 /// such an error be provided
-pub trait LexerError<L: Lexer + ?Sized>: Sized + std::error::Error {
-    fn failed_to_parse(lexer: &L, state: <L as Lexer>::State, ch: char) -> Self;
+///
+/// It might be nice to have this take the [Lexer] too, but then there
+/// is a cycle in that Lexer::Error will in general depend on Lexer
+/// which depends on Lexer::Error...
+pub trait LexerError<P> : Sized + std::error::Error
+{
+    fn failed_to_parse(state: P, ch: char) -> Self;
 }

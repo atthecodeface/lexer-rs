@@ -17,6 +17,6 @@ pub use parser_iter::ParserIterator;
 pub use stream_char_pos::StreamCharPos;
 pub use stream_char_span::StreamCharSpan;
 pub use text_lexer::TSSLexer;
-pub use token_parse_error::TokenParseError;
+pub use token_parse_error::LexerParseError;
 pub use traits::{Lexer, LexerError, LexerOfChar, LexerParseFn, LexerParseResult};
 pub use traits::{PosnInCharStream, PosnInStream};

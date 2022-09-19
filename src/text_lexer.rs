@@ -37,7 +37,7 @@ impl<'a, P, T, E> TSSLexer<'a, P, T, E>
 where
     P: PosnInCharStream,
     T: Sized + std::fmt::Debug + Copy,
-    E: LexerError<Self>,
+    E: LexerError<P>,
 {
     //fp new
     /// Create a new [TextStream] by borrowing a [str]
@@ -78,14 +78,14 @@ impl<'a, P, T, E> Lexer for TSSLexer<'a, P, T, E>
 where
     P: PosnInCharStream,
     T: Sized + std::fmt::Debug + Copy,
-    E: LexerError<Self>,
+    E: LexerError<P>,
 {
     type Token = T;
     type Error = E;
     type State = P;
 
     //mp parse
-    fn parse(&self, state: P, parsers: &[LexerParseFn<Self>]) -> LexerParseResult<Self> {
+    fn parse(&self, state: P, parsers: &[LexerParseFn<Self>]) -> LexerParseResult<Self::State, Self::Token, Self::Error> {
         if let Some(ch) = self.peek_at(&state) {
             for p in parsers {
                 let result = p(&self, state, ch)?;
@@ -93,7 +93,7 @@ where
                     return Ok(result);
                 }
             }
-            return Err(E::failed_to_parse(&self, state, ch));
+            return Err(E::failed_to_parse(state, ch));
         }
         Ok(None)
     }
@@ -104,7 +104,7 @@ impl<'a, P, T, E> LexerOfChar for TSSLexer<'a, P, T, E>
 where
     P: PosnInCharStream,
     T: Sized + std::fmt::Debug + Copy,
-    E: LexerError<Self>,
+    E: LexerError<P>,
 {
     //mp range_as_bytes
     /// Borrow some bytes of the stream from an offset
