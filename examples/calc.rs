@@ -1,6 +1,6 @@
 //a Imports
 use lexer::{LineColumn};
-use lexer::{PosnInCharStream, StreamCharPos};
+use lexer::{StreamCharPos};
 use lexer::{TokenParseError};
 use lexer::{TSSLexer, LexerParseResult};
 

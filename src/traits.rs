@@ -105,13 +105,3 @@ pub trait LexerError<L:Lexer + ?Sized>: Sized + std::error::Error {
     fn failed_to_parse(lexer:&L, state:<L as Lexer>::State, ch:char) -> Self;
 }
 
-//a TokenTypeError
-//tt TokenTypeError
-/// Remove me
-///
-/// A trait required of an error - a char that does not match any
-/// token parser rust return an error, and this trait requires that
-/// such an error be provided
-pub trait TokenTypeError<P>: Sized + std::error::Error {
-    fn failed_to_parse(ch: char, pos: P) -> Self;
-}

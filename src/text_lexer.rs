@@ -1,8 +1,7 @@
 //a Imports
-use std::ops::Range;
 use std::marker::PhantomData;
 
-use crate::{PosnInCharStream, StreamCharSpan, TokenTypeError};
+use crate::{PosnInCharStream, StreamCharSpan};
 use crate::{Lexer, LexerOfChar, LexerError, LexerParseFn, LexerParseResult};
 
 //a Impl Lexer
