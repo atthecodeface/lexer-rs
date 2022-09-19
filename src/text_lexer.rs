@@ -1,17 +1,17 @@
 //a Imports
 use std::marker::PhantomData;
 
+use crate::{Lexer, LexerError, LexerOfChar, LexerParseFn, LexerParseResult};
 use crate::{PosnInCharStream, StreamCharSpan};
-use crate::{Lexer, LexerOfChar, LexerError, LexerParseFn, LexerParseResult};
 
 //a Impl Lexer
 //tp TSSLexer
 // Cannot derive either Copy or Clone without that putting the same bound on T and E
-#[derive (Debug)]
+#[derive(Debug)]
 pub struct TSSLexer<'a, P, T, E>
 where
     P: PosnInCharStream,
-    {
+{
     text: &'a str,
     end: usize,
     _phantom_posn: PhantomData<&'a P>,
@@ -20,17 +20,13 @@ where
 }
 
 //ip Copy for TSSLexer<'a, P, T, E>
-impl <'a, P, T, E> Copy for TSSLexer<'a, P, T, E>
-where
-    P: PosnInCharStream,
-    {
-}
+impl<'a, P, T, E> Copy for TSSLexer<'a, P, T, E> where P: PosnInCharStream {}
 
 //ip Clone for TSSLexer<'a, P, T, E>
-impl <'a, P, T, E> Clone for TSSLexer<'a, P, T, E>
+impl<'a, P, T, E> Clone for TSSLexer<'a, P, T, E>
 where
     P: PosnInCharStream,
-    {
+{
     fn clone(&self) -> Self {
         *self
     }
@@ -38,7 +34,7 @@ where
 
 //ip TSSLexer
 use crate::ParserIterator;
-impl <'a, P, T, E> TSSLexer<'a, P, T, E> 
+impl<'a, P, T, E> TSSLexer<'a, P, T, E>
 where
     P: PosnInCharStream,
     T: Sized + std::fmt::Debug + Copy,
@@ -48,11 +44,12 @@ where
     /// Create a new [TextStream] by borrowing a [str]
     pub fn new(text: &'a str) -> Self {
         let end = text.as_bytes().len();
-        Self { text,
-               end,
-               _phantom_posn: PhantomData,
-               _phantom_token: PhantomData,
-               _phantom_error: PhantomData,
+        Self {
+            text,
+            end,
+            _phantom_posn: PhantomData,
+            _phantom_token: PhantomData,
+            _phantom_error: PhantomData,
         }
     }
 
@@ -60,15 +57,14 @@ where
     pub fn iter_tokens<'iter>(
         &'iter self,
         parsers: &'iter [LexerParseFn<Self>],
-    ) -> ParserIterator<'iter, Self>
-    {
-        let state = P::default();        
+    ) -> ParserIterator<'iter, Self> {
+        let state = P::default();
         ParserIterator::new(self, state, parsers)
     }
 
     //mp peek_at_offset
     /// Get the utf8 chararacter at the byte offset, or None at the end of a string
-    fn peek_at_offset(&self, byte_ofs:usize) -> Option<char> {
+    fn peek_at_offset(&self, byte_ofs: usize) -> Option<char> {
         if byte_ofs >= self.end {
             None
         } else {
@@ -81,7 +77,7 @@ where
 }
 
 //ip Lexer for TSSLexer
-impl <'a, P, T, E> Lexer for TSSLexer<'a, P, T, E> 
+impl<'a, P, T, E> Lexer for TSSLexer<'a, P, T, E>
 where
     P: PosnInCharStream,
     T: Sized + std::fmt::Debug + Copy,
@@ -90,12 +86,9 @@ where
     type Token = T;
     type Error = E;
     type State = P;
-    
+
     //mp parse
-    fn parse(&self,
-             state: P,
-             parsers: &[LexerParseFn<Self>],
-    ) -> LexerParseResult<Self> {
+    fn parse(&self, state: P, parsers: &[LexerParseFn<Self>]) -> LexerParseResult<Self> {
         if let Some(ch) = self.peek_at(&state) {
             for p in parsers {
                 let result = p(&self, state, ch)?;
@@ -110,7 +103,7 @@ where
 }
 
 //ip LexerOfChar for TSSLexer
-impl <'a, P, T, E> LexerOfChar for TSSLexer<'a, P, T, E> 
+impl<'a, P, T, E> LexerOfChar for TSSLexer<'a, P, T, E>
 where
     P: PosnInCharStream,
     T: Sized + std::fmt::Debug + Copy,
@@ -137,19 +130,19 @@ where
     }
 
     //mp get_text
-    /// Get the text between two [StreamCharPos] provided by a parser 
+    /// Get the text between two [StreamCharPos] provided by a parser
     ///
     /// # Safety
     ///
     /// The [StreamCharPos] must have been provided by a parser and
     /// so the byte offsets are indeed utf8 character boundaries
-    fn get_text(&self, start: P, end:P) -> &str {
+    fn get_text(&self, start: P, end: P) -> &str {
         unsafe { self.text.get_unchecked(start.byte_ofs()..end.byte_ofs()) }
     }
 
     //mp peek_at
     /// Get the utf8 chararacter at the byte offset, or None at the end of a string
-    fn peek_at(&self, state:&P) -> Option<char> {
+    fn peek_at(&self, state: &P) -> Option<char> {
         self.peek_at_offset(state.byte_ofs())
     }
 
@@ -172,7 +165,7 @@ where
 
     //cp consumed_chars
     /// Become the span after consuming a particular string of known character length
-    fn consumed_chars(&self, state: P, num_bytes:usize, num_chars: usize) -> P {
+    fn consumed_chars(&self, state: P, num_bytes: usize, num_chars: usize) -> P {
         state.advance_cols(num_bytes, num_chars)
     }
 
@@ -184,7 +177,7 @@ where
 
     //mp matches_bytes
     /// Match the text at the offset with a str
-    fn matches_bytes(&self, state:&P, s: &[u8]) -> bool {
+    fn matches_bytes(&self, state: &P, s: &[u8]) -> bool {
         let n = s.len();
         let byte_ofs = state.byte_ofs();
         if byte_ofs + n > self.end {

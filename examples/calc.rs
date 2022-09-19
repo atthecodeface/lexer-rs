@@ -1,8 +1,8 @@
 //a Imports
-use lexer::{LineColumn};
-use lexer::{StreamCharPos};
-use lexer::{TokenParseError};
-use lexer::{TSSLexer, LexerParseResult};
+use lexer::LineColumn;
+use lexer::StreamCharPos;
+use lexer::TokenParseError;
+use lexer::{LexerParseResult, TSSLexer};
 
 //a CalcOp
 //tp CalcOp
@@ -66,7 +66,7 @@ type CalcLexResult<'a> = LexerParseResult<TextStream<'a>>;
 //fi parse_char_fn
 /// Parser function to return a Token if it is a known one
 /// character token otherwise it returns None
-fn parse_char_fn<'a>(stream: &TextStream<'a>, state:TextPos, ch:char) -> CalcLexResult<'a>
+fn parse_char_fn<'a>(stream: &TextStream<'a>, state: TextPos, ch: char) -> CalcLexResult<'a>
 where
     'a: 'a,
 {
@@ -90,7 +90,7 @@ where
 
 //fi parse_value_fn
 /// Parser function to return a Token if the text matches a value
-fn parse_value_fn<'a>(stream: &TextStream<'a>, state:TextPos, ch:char) -> CalcLexResult<'a>
+fn parse_value_fn<'a>(stream: &TextStream<'a>, state: TextPos, ch: char) -> CalcLexResult<'a>
 where
     'a: 'a,
 {
@@ -107,7 +107,7 @@ where
 
 //fi parse_whitespace_fn
 /// Parser function to return a Token if whitespace
-fn parse_whitespace_fn<'a>(stream: &TextStream<'a>, state:TextPos, ch:char) -> CalcLexResult<'a>
+fn parse_whitespace_fn<'a>(stream: &TextStream<'a>, state: TextPos, ch: char) -> CalcLexResult<'a>
 where
     'a: 'a,
 {
@@ -119,7 +119,6 @@ where
         Ok(None)
     }
 }
-
 
 //a Lexical analyzer tests
 #[test]
@@ -157,5 +156,4 @@ fn test_lex_1() {
     assert!(x.is_none());
 }
 
-fn main() {
-}
+fn main() {}

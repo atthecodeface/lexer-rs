@@ -6,7 +6,7 @@ use crate::{Lexer, LexerParseFn};
 /// An iterator over a Lexer presenting the parsed Tokens from it
 pub struct ParserIterator<'a, L>
 where
-    L: Lexer
+    L: Lexer,
 {
     lexer: &'a L,
     state: L::State,
@@ -19,13 +19,17 @@ where
     L: Lexer,
 {
     /// Create a new token stream iterator to parse a string and deliver tokens
-    pub fn new(lexer: &'a L, state:L::State, parsers: &'a [LexerParseFn<L>]) -> Self {
-        Self { lexer, state, parsers }
+    pub fn new(lexer: &'a L, state: L::State, parsers: &'a [LexerParseFn<L>]) -> Self {
+        Self {
+            lexer,
+            state,
+            parsers,
+        }
     }
 }
 
 //ip Iterator for ParserIterator
-impl<'a, L> Iterator for ParserIterator<'a, L> 
+impl<'a, L> Iterator for ParserIterator<'a, L>
 where
     L: Lexer,
 {

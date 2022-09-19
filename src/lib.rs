@@ -1,6 +1,5 @@
 //a Documentation
 /// remove TokenType and use Lexer::Token instead
-
 //a Imports
 mod line_column;
 mod parser_iter;
@@ -17,7 +16,7 @@ pub use parser_iter::ParserIterator;
 // pub use simple::{SimpleKeyword, SimpleToken};
 pub use stream_char_pos::StreamCharPos;
 pub use stream_char_span::StreamCharSpan;
-pub use token_parse_error::{TokenParseError};
-pub use text_lexer::{TSSLexer};
+pub use text_lexer::TSSLexer;
+pub use token_parse_error::TokenParseError;
+pub use traits::{Lexer, LexerError, LexerOfChar, LexerParseFn, LexerParseResult};
 pub use traits::{PosnInCharStream, PosnInStream};
-pub use traits::{LexerError, LexerParseFn, LexerParseResult, Lexer, LexerOfChar};

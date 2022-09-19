@@ -58,19 +58,16 @@ impl PosnInCharStream for usize {
 
 //a Lexer etc
 //tt Lexer
-pub trait Lexer : std::fmt::Debug {
-    type Token : Sized + std::fmt::Debug + Copy;
+pub trait Lexer: std::fmt::Debug {
+    type Token: Sized + std::fmt::Debug + Copy;
     type State: Sized + Copy + std::fmt::Debug;
     type Error: LexerError<Self>;
-    fn parse(&self,
-             state: Self::State,
-             parsers: &[LexerParseFn<Self>],
-    ) -> LexerParseResult<Self>;
+    fn parse(&self, state: Self::State, parsers: &[LexerParseFn<Self>]) -> LexerParseResult<Self>;
 }
 
 //tt LexerOfChar
-// Requires Lexer::State : PosnInCharStream> 
-pub trait LexerOfChar : Lexer {
+// Requires Lexer::State : PosnInCharStream>
+pub trait LexerOfChar: Lexer {
     fn do_while<F: Fn(usize, char) -> bool>(
         &self,
         state: Self::State,
@@ -78,30 +75,30 @@ pub trait LexerOfChar : Lexer {
         f: &F,
     ) -> (Self::State, Option<(Self::State, usize)>);
     fn range_as_bytes(&self, ofs: usize, n: usize) -> &[u8];
-    fn get_text_span(&self, span: &StreamCharSpan<Self::State>) -> &str where <Self as Lexer>::State: PosnInCharStream;
-    fn get_text(&self, start: Self::State, end:Self::State) -> &str;
+    fn get_text_span(&self, span: &StreamCharSpan<Self::State>) -> &str
+    where
+        <Self as Lexer>::State: PosnInCharStream;
+    fn get_text(&self, start: Self::State, end: Self::State) -> &str;
     fn consume_ascii_str(&self, state: Self::State, s: &str) -> Self::State;
     fn consume_char(&self, state: Self::State, ch: char) -> Self::State;
-    fn consumed_newline(&self, state: Self::State, num_bytes:usize) -> Self::State;
-    fn consumed_chars(&self, state: Self::State, num_bytes:usize, num_chars: usize) -> Self::State;
+    fn consumed_newline(&self, state: Self::State, num_bytes: usize) -> Self::State;
+    fn consumed_chars(&self, state: Self::State, num_bytes: usize, num_chars: usize)
+        -> Self::State;
     fn matches(&self, state: &Self::State, s: &str) -> bool;
-    fn matches_bytes(&self, state:&Self::State, s: &[u8]) -> bool;
-    fn peek_at(&self, state:&Self::State) -> Option<char>;
+    fn matches_bytes(&self, state: &Self::State, s: &[u8]) -> bool;
+    fn peek_at(&self, state: &Self::State) -> Option<char>;
 }
 
 //tp LexerParseResult
-pub type LexerParseResult<L> = Result<Option<(<L as Lexer>::State,
-                                              <L as Lexer>::Token)>,
-                                      <L as Lexer>::Error>;
+pub type LexerParseResult<L> =
+    Result<Option<(<L as Lexer>::State, <L as Lexer>::Token)>, <L as Lexer>::Error>;
 //tp LexerParseFn
-pub type LexerParseFn<L> =
-    fn(lexer:&L, <L as Lexer>::State, char) -> LexerParseResult<L>;
+pub type LexerParseFn<L> = fn(lexer: &L, <L as Lexer>::State, char) -> LexerParseResult<L>;
 
 //tt LexerError
 /// A trait required of an error - a char that does not match any
 /// token parser rust return an error, and this trait requires that
 /// such an error be provided
-pub trait LexerError<L:Lexer + ?Sized>: Sized + std::error::Error {
-    fn failed_to_parse(lexer:&L, state:<L as Lexer>::State, ch:char) -> Self;
+pub trait LexerError<L: Lexer + ?Sized>: Sized + std::error::Error {
+    fn failed_to_parse(lexer: &L, state: <L as Lexer>::State, ch: char) -> Self;
 }
-
