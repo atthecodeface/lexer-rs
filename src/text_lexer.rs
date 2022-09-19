@@ -2,7 +2,7 @@
 use std::marker::PhantomData;
 
 use crate::{Lexer, LexerError, LexerOfChar, LexerParseFn, LexerParseResult};
-use crate::{PosnInCharStream, StreamCharSpan};
+use crate::{PosnInCharStream, StreamCharSpan, ParserIterator};
 
 //a Impl Lexer
 //tp TSSLexer
@@ -33,7 +33,6 @@ where
 }
 
 //ip TSSLexer
-use crate::ParserIterator;
 impl<'a, P, T, E> TSSLexer<'a, P, T, E>
 where
     P: PosnInCharStream,
@@ -64,13 +63,11 @@ where
 
     //mp peek_at_offset
     /// Get the utf8 chararacter at the byte offset, or None at the end of a string
-    fn peek_at_offset(&self, byte_ofs: usize) -> Option<char> {
+    unsafe fn peek_at_offset(&self, byte_ofs: usize) -> Option<char> {
         if byte_ofs >= self.end {
             None
         } else {
-            // Safety : byte_ofs is maintained as a utf8 character
-            // point boundary within or at the end of the str
-            let text = unsafe { self.text.get_unchecked(byte_ofs..self.end) };
+            let text = self.text.get_unchecked(byte_ofs..self.end);
             text.chars().next()
         }
     }
@@ -142,8 +139,15 @@ where
 
     //mp peek_at
     /// Get the utf8 chararacter at the byte offset, or None at the end of a string
+    ///
+    /// # Safety
+    ///
+    /// 'state' is maintained as a utf8 character point boundary
+    /// within or at the end of the 'str' borrowed by [Self]
     fn peek_at(&self, state: &P) -> Option<char> {
-        self.peek_at_offset(state.byte_ofs())
+        unsafe {
+            self.peek_at_offset(state.byte_ofs())
+        }
     }
 
     //cp consume_char
@@ -206,7 +210,11 @@ where
         let start = state;
         let mut n = 1;
         let mut ofs = state.byte_ofs() + ch.len_utf8();
-        while let Some(ch) = self.peek_at_offset(ofs) {
+        // # Safety
+        //
+        // 'ofs' is maintained as a utf8 character point boundary
+        // within or at the end of the 'str' borrowed by [Self]
+        while let Some(ch) = unsafe { self.peek_at_offset(ofs) } {
             if !f(n, ch) {
                 break;
             }
