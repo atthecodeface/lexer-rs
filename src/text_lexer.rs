@@ -2,7 +2,7 @@
 use std::ops::Range;
 use std::marker::PhantomData;
 
-use crate::{PosnInCharStream, StreamCharSpan, TokenType, TokenTypeError};
+use crate::{PosnInCharStream, StreamCharSpan, TokenTypeError};
 use crate::{Lexer, LexerOfChar, LexerError, LexerParseFn, LexerParseResult};
 
 //a Impl Lexer
@@ -42,7 +42,7 @@ use crate::ParserIterator;
 impl <'a, P, T, E> TSSLexer<'a, P, T, E> 
 where
     P: PosnInCharStream,
-    T: Sized + std::fmt::Debug + Copy + TokenType,
+    T: Sized + std::fmt::Debug + Copy,
     E: LexerError<Self>,
 {
     //fp new
@@ -85,7 +85,7 @@ where
 impl <'a, P, T, E> Lexer for TSSLexer<'a, P, T, E> 
 where
     P: PosnInCharStream,
-    T: Sized + std::fmt::Debug + Copy + TokenType,
+    T: Sized + std::fmt::Debug + Copy,
     E: LexerError<Self>,
 {
     type Token = T;
@@ -114,7 +114,7 @@ where
 impl <'a, P, T, E> LexerOfChar for TSSLexer<'a, P, T, E> 
 where
     P: PosnInCharStream,
-    T: Sized + std::fmt::Debug + Copy + TokenType,
+    T: Sized + std::fmt::Debug + Copy,
     E: LexerError<Self>,
 {
     //mp range_as_bytes

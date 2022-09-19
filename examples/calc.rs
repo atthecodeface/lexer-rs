@@ -1,5 +1,5 @@
 //a Imports
-use lexer::{LineColumn, TokenType};
+use lexer::{LineColumn};
 use lexer::{PosnInCharStream, StreamCharPos};
 use lexer::{TokenParseError};
 use lexer::{TSSLexer, LexerParseResult};
@@ -48,7 +48,6 @@ enum CalcToken {
     Op(CalcOp),
     Value(f64),
 }
-impl TokenType for CalcToken {}
 
 //a TextPos, TextStream
 //tp TextPos
