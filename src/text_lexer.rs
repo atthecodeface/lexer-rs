@@ -42,7 +42,7 @@ use crate::ParserIterator;
 impl <'a, P, T, E> TSSLexer<'a, P, T, E> 
 where
     P: PosnInCharStream,
-    T: TokenType,
+    T: Sized + std::fmt::Debug + Copy + TokenType,
     E: LexerError<Self>,
 {
     //fp new
@@ -85,7 +85,7 @@ where
 impl <'a, P, T, E> Lexer for TSSLexer<'a, P, T, E> 
 where
     P: PosnInCharStream,
-    T: TokenType,
+    T: Sized + std::fmt::Debug + Copy + TokenType,
     E: LexerError<Self>,
 {
     type Token = T;
@@ -114,7 +114,7 @@ where
 impl <'a, P, T, E> LexerOfChar for TSSLexer<'a, P, T, E> 
 where
     P: PosnInCharStream,
-    T: TokenType,
+    T: Sized + std::fmt::Debug + Copy + TokenType,
     E: LexerError<Self>,
 {
     //mp range_as_bytes

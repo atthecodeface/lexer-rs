@@ -1,5 +1,5 @@
 //a Imports
-use crate::{PosnInCharStream, TokenTypeError, LexerError, Lexer};
+use crate::{PosnInCharStream, LexerError, Lexer};
 
 //a TokenParseError
 //tp TokenParseError
@@ -19,16 +19,6 @@ where
 
 //ip Error for TokenParseError
 impl<P> std::error::Error for TokenParseError<P> where P: PosnInCharStream {}
-
-//ip TokenTypeError for TokenParseError
-impl<P> TokenTypeError<P> for TokenParseError<P>
-where
-    P: PosnInCharStream,
-{
-    fn failed_to_parse(ch: char, pos: P) -> Self {
-        Self { ch, pos }
-    }
-}
 
 //ip LexerError for TokenParseError
 impl <L, P> LexerError<L> for TokenParseError<P>

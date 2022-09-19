@@ -58,7 +58,7 @@ impl PosnInCharStream for usize {
 
 //a Lexer etc
 pub trait Lexer : std::fmt::Debug {
-    type Token : TokenType;
+    type Token : Sized + std::fmt::Debug + Copy + TokenType;
     type State: Sized + Copy + std::fmt::Debug;
     type Error: LexerError<Self>;
     fn parse(&self,
