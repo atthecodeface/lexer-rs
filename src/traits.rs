@@ -63,17 +63,18 @@ pub trait Lexer: std::fmt::Debug {
     type Token: Sized + std::fmt::Debug + Copy;
     type State: Sized + Copy + std::fmt::Debug + Default;
     type Error: LexerError<Self::State>;
-    fn parse<'a, F>(&'a self, state: Self::State, parsers: &[F]) -> LexerParseResult<Self::State, Self::Token, Self::Error>
-    where          F : std::ops::Deref<Target = dyn Fn(&'a Self, Self::State, char) -> LexerParseResult<Self::State, Self::Token, Self::Error> + 'a>
+    fn parse<'a>(&'a self, state: Self::State, parsers: &[BoxDynLexerPasrseFn<'a, Self> ]) -> LexerParseResult<Self::State, Self::Token, Self::Error>
+//    where          F : std::ops::Deref<Target = dyn Fn(&'a Self, Self::State, char) -> LexerParseResult<Self::State, Self::Token, Self::Error> + 'a>
 ;
-    fn iter<'iter, F> (&'iter self, parsers: &'iter [F]) -> ParserIterator<'iter, Self, F>
+    fn iter<'iter> (&'iter self, parsers: &'iter [BoxDynLexerPasrseFn<'iter, Self> ]) -> ParserIterator<'iter, Self>
     where Self:Sized ,        
-         F : std::ops::Deref<Target = dyn Fn(&'iter Self, Self::State, char) -> LexerParseResult<Self::State, Self::Token, Self::Error> +'iter >
+    // F : std::ops::Deref<Target = dyn Fn(&'iter Self, Self::State, char) -> LexerParseResult<Self::State, Self::Token, Self::Error> +'iter >
     {
         let state = Default::default();
         ParserIterator::new(self, state, parsers)
     }
 }
+type BoxDynLexerPasrseFn<'a, L> = Box<dyn Fn(&L, <L as Lexer>::State, char) -> LexerParseResult<<L as Lexer>::State, <L as Lexer>::Token, <L as Lexer>::Error>  + 'a>;
 
 //tt LexerOfChar
 // Requires Lexer::State : PosnInCharStream>

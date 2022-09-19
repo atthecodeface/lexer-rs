@@ -141,9 +141,9 @@ impl <'a> CalcTokenParser<'a> {
     pub fn add_parser<F:Fn(&TextStream, TextPos, char) -> CalcLexResult + 'a>(&mut self, f:F) {
         self.parsers.push(Box::new(f));
     }
-    pub fn iter<'iter>(&'iter self, t:&'iter TextStream<'iter>) -> lexer::ParserIterator<'iter, TextStream<'iter>, BoxDynCalcLexFn<'iter>> {
-        t.iter(&self.parsers)
-    }
+    //pub fn iter<'iter>(&'iter self, t:&'iter TextStream<'iter>) -> lexer::ParserIterator<'iter, TextStream<'iter>, BoxDynCalcLexFn<'iter>> {
+    //t.iter(&self.parsers)
+    //}
 }
 //a Main
 

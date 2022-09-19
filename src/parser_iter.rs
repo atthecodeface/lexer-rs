@@ -5,24 +5,25 @@ use crate::{Lexer, LexerParseFn};
 //tp ParserIterator
 /// An iterator over a Lexer presenting the parsed Tokens from it
 use crate::LexerParseResult;
-pub struct ParserIterator<'a, L, F>
+type BoxDynLexerPasrseFn<'a, L> = Box<dyn Fn(&L, <L as Lexer>::State, char) -> LexerParseResult<<L as Lexer>::State, <L as Lexer>::Token, <L as Lexer>::Error>  + 'a>;
+
+pub struct ParserIterator<'a, L>
 where
     L: Lexer,
-    F : std::ops::Deref<Target = dyn Fn(&'a L, <L as Lexer>::State, char) -> LexerParseResult<<L as Lexer>::State, <L as Lexer>::Token, <L as Lexer>::Error> + 'a>,
 {
     lexer: &'a L,
     state: L::State,
-    parsers: &'a [F],
+    parsers: &'a [BoxDynLexerPasrseFn<'a, L>],
 }
 
 //ip ParserIterator
-impl<'a, L, F> ParserIterator<'a, L, F>
+impl<'a, L> ParserIterator<'a, L>
 where
     L: Lexer,
-    F : std::ops::Deref<Target = dyn Fn(&'a L, <L as Lexer>::State, char) -> LexerParseResult<<L as Lexer>::State, <L as Lexer>::Token, <L as Lexer>::Error> + 'a>,
+    // F : std::ops::Deref<Target = dyn Fn(&'a L, <L as Lexer>::State, char) -> LexerParseResult<<L as Lexer>::State, <L as Lexer>::Token, <L as Lexer>::Error> + 'a>,
 {
     /// Create a new token stream iterator to parse a string and deliver tokens
-    pub fn new(lexer: &'a L, state: L::State, parsers: &'a [F]) -> Self {
+    pub fn new(lexer: &'a L, state: L::State, parsers: &'a [BoxDynLexerPasrseFn<'a, L>]) -> Self {
         Self {
             lexer,
             state,
@@ -32,10 +33,10 @@ where
 }
 
 //ip Iterator for ParserIterator
-impl<'a, L, F> Iterator for ParserIterator<'a, L, F>
+impl<'a, L> Iterator for ParserIterator<'a, L>
 where
     L: Lexer,
-    F : std::ops::Deref<Target = dyn Fn(&'a L, <L as Lexer>::State, char) -> LexerParseResult<<L as Lexer>::State, <L as Lexer>::Token, <L as Lexer>::Error> + 'a>,
+//    F : std::ops::Deref<Target = dyn Fn(&'a L, <L as Lexer>::State, char) -> LexerParseResult<<L as Lexer>::State, <L as Lexer>::Token, <L as Lexer>::Error> + 'a>,
 {
     type Item = Result<L::Token, L::Error>;
     fn next(&mut self) -> Option<Self::Item> {

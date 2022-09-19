@@ -4,6 +4,8 @@ use std::marker::PhantomData;
 use crate::{Lexer, LexerError, LexerOfChar, LexerParseFn, LexerParseResult};
 use crate::{PosnInCharStream, StreamCharSpan, ParserIterator};
 
+type BoxDynLexerPasrseFn<'a, L> = Box<dyn Fn(&L, <L as Lexer>::State, char) -> LexerParseResult<<L as Lexer>::State, <L as Lexer>::Token, <L as Lexer>::Error>  + 'a>;
+
 //a Impl Lexer
 //tp TSSLexer
 // Cannot derive either Copy or Clone without that putting the same bound on T and E
@@ -55,9 +57,9 @@ where
     //mp iter_tokens
     pub fn iter_tokens<'iter, F>(
         &'iter self,
-        parsers: &'iter [F],
-    ) -> ParserIterator<'iter, Self, F>
-        where F : std::ops::Deref<Target = dyn Fn(&'iter Self, P, char) -> LexerParseResult<P, T, E> + 'iter>
+        parsers: &'iter [BoxDynLexerPasrseFn<'iter, Self>],
+    ) -> ParserIterator<'iter, Self>
+//        where F : std::ops::Deref<Target = dyn Fn(&'iter Self, P, char) -> LexerParseResult<P, T, E> + 'iter>
     {
         let state = P::default();
         ParserIterator::new(self, state, parsers)
@@ -87,8 +89,8 @@ where
     type State = P;
 
     //mp parse
-    fn parse<'iter,  F>(&'iter self, state: Self::State, parsers: &[F]) -> LexerParseResult<Self::State, Self::Token, Self::Error>
-    where F : std::ops::Deref<Target = dyn Fn(&'iter Self, P, char) -> LexerParseResult<P, T, E> + 'iter>
+    fn parse<'iter>(&'iter self, state: Self::State, parsers: &[BoxDynLexerPasrseFn<'iter, Self> ]) -> LexerParseResult<Self::State, Self::Token, Self::Error>
+    // where F : std::ops::Deref<Target = dyn Fn(&'iter Self, P, char) -> LexerParseResult<P, T, E> + 'iter>
         {
         if let Some(ch) = self.peek_at(&state) {
             for p in parsers {
