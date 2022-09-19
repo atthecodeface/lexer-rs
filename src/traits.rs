@@ -58,11 +58,21 @@ impl PosnInCharStream for usize {
 
 //a Lexer etc
 //tt Lexer
+use crate::ParserIterator;
 pub trait Lexer: std::fmt::Debug {
     type Token: Sized + std::fmt::Debug + Copy;
-    type State: Sized + Copy + std::fmt::Debug;
+    type State: Sized + Copy + std::fmt::Debug + Default;
     type Error: LexerError<Self::State>;
-    fn parse(&self, state: Self::State, parsers: &[LexerParseFn<Self>]) -> LexerParseResult<Self::State, Self::Token, Self::Error>;
+    fn parse<'a, F>(&'a self, state: Self::State, parsers: &[F]) -> LexerParseResult<Self::State, Self::Token, Self::Error>
+    where          F : std::ops::Deref<Target = dyn Fn(&'a Self, Self::State, char) -> LexerParseResult<Self::State, Self::Token, Self::Error> + 'a>
+;
+    fn iter<'iter, F> (&'iter self, parsers: &'iter [F]) -> ParserIterator<'iter, Self, F>
+    where Self:Sized ,        
+         F : std::ops::Deref<Target = dyn Fn(&'iter Self, Self::State, char) -> LexerParseResult<Self::State, Self::Token, Self::Error> +'iter >
+    {
+        let state = Default::default();
+        ParserIterator::new(self, state, parsers)
+    }
 }
 
 //tt LexerOfChar

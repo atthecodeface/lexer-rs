@@ -1,5 +1,5 @@
 //a Imports
-use crate::{Lexer, LexerError, PosnInCharStream, PosnInStream};
+use crate::{LexerError, PosnInCharStream};
 
 //a LexerParseError
 //tp LexerParseError

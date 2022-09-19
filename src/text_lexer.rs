@@ -53,10 +53,12 @@ where
     }
 
     //mp iter_tokens
-    pub fn iter_tokens<'iter>(
+    pub fn iter_tokens<'iter, F>(
         &'iter self,
-        parsers: &'iter [LexerParseFn<Self>],
-    ) -> ParserIterator<'iter, Self> {
+        parsers: &'iter [F],
+    ) -> ParserIterator<'iter, Self, F>
+        where F : std::ops::Deref<Target = dyn Fn(&'iter Self, P, char) -> LexerParseResult<P, T, E> + 'iter>
+    {
         let state = P::default();
         ParserIterator::new(self, state, parsers)
     }
@@ -85,7 +87,9 @@ where
     type State = P;
 
     //mp parse
-    fn parse(&self, state: P, parsers: &[LexerParseFn<Self>]) -> LexerParseResult<Self::State, Self::Token, Self::Error> {
+    fn parse<'iter,  F>(&'iter self, state: Self::State, parsers: &[F]) -> LexerParseResult<Self::State, Self::Token, Self::Error>
+    where F : std::ops::Deref<Target = dyn Fn(&'iter Self, P, char) -> LexerParseResult<P, T, E> + 'iter>
+        {
         if let Some(ch) = self.peek_at(&state) {
             for p in parsers {
                 let result = p(&self, state, ch)?;

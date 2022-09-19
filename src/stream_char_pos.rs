@@ -27,14 +27,14 @@ impl<P> PosnInStream for StreamCharPos<P>
 where
     P: PosnInStream,
 {
-    fn advance_cols(mut self, byte_ofs: usize, num_chars: usize) -> Self {
-        self.byte_ofs = byte_ofs;
-        self.pos.advance_cols(byte_ofs, num_chars);
+    fn advance_cols(mut self, num_bytes: usize, num_chars: usize) -> Self {
+        self.byte_ofs += num_bytes;
+        self.pos.advance_cols(num_bytes, num_chars);
         self
     }
-    fn advance_line(mut self, byte_ofs: usize) -> Self {
-        self.byte_ofs = byte_ofs;
-        self.pos.advance_line(byte_ofs);
+    fn advance_line(mut self, num_bytes: usize) -> Self {
+        self.byte_ofs += num_bytes;
+        self.pos.advance_line(num_bytes);
         self
     }
 }
