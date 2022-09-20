@@ -109,12 +109,13 @@ implemented particularly for [LexerOfString].
 !*/
 
 //a Imports
+mod char_stream;
 mod lexer;
 mod posn_and_span;
-// mod text_stream;
-// pub use simple::{SimpleKeyword, SimpleToken};
 
-pub use posn_and_span::FmtContext;
+pub use char_stream::FmtContext;
+pub use char_stream::LexerOfChar;
+
 pub use posn_and_span::LineColumn;
 pub use posn_and_span::StreamCharPos;
 pub use posn_and_span::StreamCharSpan;
@@ -125,5 +126,5 @@ pub use crate::lexer::LexerOfString;
 pub use crate::lexer::ParserIterator;
 pub use crate::lexer::SimpleParseError;
 pub use crate::lexer::{
-    BoxDynLexerParseFn, Lexer, LexerError, LexerOfChar, LexerParseFn, LexerParseResult,
+    BoxDynLexerParseFn, Lexer, LexerError, LexerParseFn, LexerParseResult,
 };

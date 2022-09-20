@@ -9,7 +9,7 @@ pub use parser_iter::ParserIterator;
 pub use lexer_of_str::LexerOfStr;
 pub use lexer_of_string::LexerOfString;
 pub use traits::{
-    BoxDynLexerParseFn, Lexer, LexerError, LexerOfChar, LexerParseFn, LexerParseResult,
+    BoxDynLexerParseFn, Lexer, LexerError, LexerParseFn, LexerParseResult,
 };
 
 pub use simple_parse_error::SimpleParseError;

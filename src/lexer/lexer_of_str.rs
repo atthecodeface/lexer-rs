@@ -155,7 +155,7 @@ where
 }
 
 //ip LexerOfChar for LexerOfStr
-impl<'a, P, T, E> LexerOfChar for LexerOfStr<'a, P, T, E>
+impl<'a, P, T, E> LexerOfChar<P> for LexerOfStr<'a, P, T, E>
 where
     P: PosnInCharStream,
     T: Sized + std::fmt::Debug + Copy,
