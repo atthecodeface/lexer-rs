@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 
 use crate::{Lexer, LexerError, LexerOfChar, LexerParseFn, LexerParseResult};
 use crate::{PosnInCharStream, StreamCharSpan, ParserIterator};
-use crate::{BoxDynLexerPasrseFn};
+use crate::{BoxDynLexerParseFn};
 
 //a Impl Lexer
 //tp TSSLexer
@@ -56,7 +56,7 @@ where
     //mp iter_tokens
     pub fn iter_tokens<'iter> (
         &'iter self,
-        parsers: &'iter [BoxDynLexerPasrseFn<'iter, Self>],
+        parsers: &'iter [BoxDynLexerParseFn<'iter, Self>],
     ) -> ParserIterator<'iter, Self>
     {
         let state = P::default();
@@ -87,7 +87,7 @@ where
     type State = P;
 
     //mp parse
-    fn parse<'iter>(&'iter self, state: Self::State, parsers: &[BoxDynLexerPasrseFn<'iter, Self> ]) -> LexerParseResult<Self::State, Self::Token, Self::Error>
+    fn parse<'iter>(&'iter self, state: Self::State, parsers: &[BoxDynLexerParseFn<'iter, Self> ]) -> LexerParseResult<Self::State, Self::Token, Self::Error>
         {
         if let Some(ch) = self.peek_at(&state) {
             for p in parsers {
@@ -100,7 +100,7 @@ where
         }
         Ok(None)
     }
-    fn iter<'iter> (&'iter self, parsers: &'iter [BoxDynLexerPasrseFn<'iter, Self> ]) -> Box<dyn Iterator<Item = Result<T, E>>+'iter>
+    fn iter<'iter> (&'iter self, parsers: &'iter [BoxDynLexerParseFn<'iter, Self> ]) -> Box<dyn Iterator<Item = Result<T, E>>+'iter>
     {
         let state = Default::default();
         Box::new(ParserIterator::new(self, state, parsers))

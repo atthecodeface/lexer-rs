@@ -1,10 +1,10 @@
 //a Imports
 use crate::{Lexer, LexerParseFn};
+use crate::{LexerParseResult, BoxDynLexerParseFn};
 
 //a ParserIterator
 //tp ParserIterator
 /// An iterator over a Lexer presenting the parsed Tokens from it
-use crate::{LexerParseResult, BoxDynLexerPasrseFn};
 
 pub struct ParserIterator<'a, L>
 where
@@ -12,7 +12,7 @@ where
 {
     lexer: &'a L,
     state: L::State,
-    parsers: &'a [BoxDynLexerPasrseFn<'a, L>],
+    parsers: &'a [BoxDynLexerParseFn<'a, L>],
 }
 
 //ip ParserIterator
@@ -22,7 +22,7 @@ where
     // F : std::ops::Deref<Target = dyn Fn(&'a L, <L as Lexer>::State, char) -> LexerParseResult<<L as Lexer>::State, <L as Lexer>::Token, <L as Lexer>::Error> + 'a>,
 {
     /// Create a new token stream iterator to parse a string and deliver tokens
-    pub fn new(lexer: &'a L, state: L::State, parsers: &'a [BoxDynLexerPasrseFn<'a, L>]) -> Self {
+    pub fn new(lexer: &'a L, state: L::State, parsers: &'a [BoxDynLexerParseFn<'a, L>]) -> Self {
         Self {
             lexer,
             state,

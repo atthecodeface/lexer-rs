@@ -25,8 +25,8 @@ pub trait Lexer: std::fmt::Debug {
     type Token: Sized + std::fmt::Debug + Copy;
     type State: Sized + Copy + std::fmt::Debug + Default;
     type Error: LexerError<Self::State>;
-    fn parse<'a>(&'a self, state: Self::State, parsers: &[BoxDynLexerPasrseFn<'a, Self> ]) -> LexerParseResult<Self::State, Self::Token, Self::Error>;
-    fn iter<'iter> (&'iter self, parsers: &'iter [BoxDynLexerPasrseFn<'iter, Self> ]) -> Box<dyn Iterator<Item = Result<Self::Token, Self::Error>> +'iter>;
+    fn parse<'a>(&'a self, state: Self::State, parsers: &[BoxDynLexerParseFn<'a, Self> ]) -> LexerParseResult<Self::State, Self::Token, Self::Error>;
+    fn iter<'iter> (&'iter self, parsers: &'iter [BoxDynLexerParseFn<'iter, Self> ]) -> Box<dyn Iterator<Item = Result<Self::Token, Self::Error>> +'iter>;
 }
 
 //tt LexerOfChar
@@ -89,4 +89,4 @@ pub type LexerParseFn<L> = fn(lexer: &L, <L as Lexer>::State, char) -> LexerPars
 /// Note that the use of 'as Box...' is required, as without it type
 /// inference will kick in on the Box::new() to infer parse_char_fn as
 /// a precise type, whereas the more generic dyn Fn is what is required.
-pub type BoxDynLexerPasrseFn<'a, L> = Box<dyn for <'call> Fn(&'call L, <L as Lexer>::State, char) -> LexerParseResult<<L as Lexer>::State, <L as Lexer>::Token, <L as Lexer>::Error>  + 'a>;
+pub type BoxDynLexerParseFn<'a, L> = Box<dyn for <'call> Fn(&'call L, <L as Lexer>::State, char) -> LexerParseResult<<L as Lexer>::State, <L as Lexer>::Token, <L as Lexer>::Error>  + 'a>;
