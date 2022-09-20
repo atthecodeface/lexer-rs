@@ -2,10 +2,10 @@
 use std::marker::PhantomData;
 
 use crate::BoxDynLexerParseFn;
-use crate::{Lexer, LexerError, LexerOfChar, LexerParseFn, LexerParseResult};
-use crate::{ParserIterator, PosnInCharStream, StreamCharSpan};
+use crate::{Lexer, LexerError, LexerOfChar, LexerParseResult};
+use crate::{PosnInCharStream, StreamCharSpan, ParserIterator};
 
-//a Impl Lexer
+//a LexerOfStr
 //tp LexerOfStr
 // Cannot derive either Copy or Clone without that putting the same bound on T and E
 #[derive(Debug)]
@@ -53,15 +53,6 @@ where
         }
     }
 
-    //mp iter_tokens
-    pub fn iter_tokens<'iter>(
-        &'iter self,
-        parsers: &'iter [BoxDynLexerParseFn<'iter, Self>],
-    ) -> ParserIterator<'iter, Self> {
-        let state = P::default();
-        ParserIterator::new(self, state, parsers)
-    }
-
     //mp peek_at_offset
     /// Get the utf8 chararacter at the byte offset, or None at the end of a string
     unsafe fn peek_at_offset(&self, byte_ofs: usize) -> Option<char> {
@@ -74,6 +65,7 @@ where
     }
 }
 
+//a Impl Lexer, LexerOfChar
 //ip Lexer for LexerOfStr
 impl<'a, P, T, E> Lexer for LexerOfStr<'a, P, T, E>
 where
@@ -160,9 +152,9 @@ where
         unsafe { self.peek_at_offset(state.byte_ofs()) }
     }
 
-    //cp consume_char
+    //cp consumed_char
     /// Become the span after consuming a particular char
-    fn consume_char(&self, state: P, ch: char) -> P {
+    fn consumed_char(&self, state: P, ch: char) -> P {
         if ch == '\n' {
             state.advance_line(1)
         } else {
@@ -170,9 +162,9 @@ where
         }
     }
 
-    //cp consume_ascii_str
+    //cp consumed_ascii_str
     /// Become the span after consuming a particular ascii string without newlines
-    fn consume_ascii_str(&self, state: P, s: &str) -> P {
+    fn consumed_ascii_str(&self, state: P, s: &str) -> P {
         let n = s.len();
         state.advance_cols(n, n)
     }

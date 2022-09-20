@@ -26,6 +26,13 @@ impl std::fmt::Display for LineColumn {
 
 //ip PosnInStream for LineColumn
 impl PosnInStream for LineColumn {
+    fn line(&self) -> usize {
+        self.line
+    }
+
+    fn column(&self) -> usize {
+        self.column
+    }
     fn advance_cols(mut self, _: usize, num_chars: usize) -> Self {
         self.column += num_chars;
         self
@@ -34,5 +41,8 @@ impl PosnInStream for LineColumn {
         self.column = 1;
         self.line += 1;
         self
+    }
+    fn error_fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+        write!(fmt,"line {} column {}", self.line, self.column)
     }
 }

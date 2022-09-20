@@ -1,11 +1,10 @@
 //a Imports
 use std::env;
 
-use lexer::LexerParseError;
+use lexer::SimpleParseError;
 use lexer::LineColumn;
 use lexer::StreamCharPos;
-use lexer::{Lexer, LexerOfChar, LexerParseResult, TSSLexer};
-// use lexer::LexerParseFn;
+use lexer::{Lexer, LexerOfChar, LexerParseResult, LexerOfStr, LexerOfString, FmtContext};
 
 //a CalcOp
 //tp CalcOp
@@ -60,12 +59,12 @@ type TextPos = StreamCharPos<LineColumn>;
 
 //tp TextStream
 ///
-type TextStream<'a> = TSSLexer<'a, TextPos, CalcToken, LexerParseError<TextPos>>;
+type TextStream<'a> = LexerOfStr<'a, TextPos, CalcToken, SimpleParseError<TextPos>>;
 
 //a CalcLexResult
 //tp CalcLexResult
 // type CalcLexResult = Result<Option<(TPos, Token)>, LexError>;
-type CalcLexResult = LexerParseResult<TextPos, CalcToken, LexerParseError<TextPos>>;
+type CalcLexResult = LexerParseResult<TextPos, CalcToken, SimpleParseError<TextPos>>;
 
 //a Lexical analysis functions
 //fi parse_char_fn
@@ -83,7 +82,7 @@ fn parse_char_fn(stream: &TextStream, state: TextPos, ch: char) -> CalcLexResult
             _ => None,
         }
     } {
-        Ok(Some((stream.consume_char(state, ch), t)))
+        Ok(Some((stream.consumed_char(state, ch), t)))
     } else {
         Ok(None)
     }
@@ -138,10 +137,12 @@ impl<'a> CalcTokenParser<'a> {
     pub fn add_parser<F: Fn(&TextStream, TextPos, char) -> CalcLexResult + 'a>(&mut self, f: F) {
         self.parsers.push(Box::new(f));
     }
-    //pub fn iter<'iter>(&'iter self, t:&'iter TextStream<'iter>) -> lexer::ParserIterator<'iter, TextStream<'iter>, BoxDynCalcLexFn<'iter>> {
-    //t.iter(&self.parsers)
-    //}
+
+    pub fn iter<'iter>(&'iter self, t:&'iter TextStream<'iter>) -> impl Iterator<Item = Result<CalcToken, SimpleParseError<TextPos>>> + 'iter {
+        t.iter(&self.parsers)
+    }
 }
+
 //a Main
 
 fn main() -> Result<(), String> {
@@ -150,20 +151,29 @@ fn main() -> Result<(), String> {
         return Err(format!("Usage: {} <expression>", args[0]));
     }
     let args_as_string = args[1..].join(" ");
-    let ts = TextStream::new(&args_as_string);
-    let parsers = [
-        Box::new(parse_char_fn) as BoxDynCalcLexFn,
-        Box::new(parse_value_fn),
-        Box::new(parse_whitespace_fn),
-    ];
+    let c = CalcTokenParser::new();
+    let l = LexerOfString::default()
+        .set_text(args_as_string);
+    let ts = l.lexer();
+    
+    // let ts = TextStream::new(&args_as_string);
 
-    /*
-        let tokens = ts.iter_tokens(&parsers);
-        for t in tokens {
-            let t = t.map_err(|e| format!("{}", e))?;
-            print!("{}", t);
-        }
-    */
+    println!("Parsing");
+    let tokens = c.iter(&ts);
+    for t in tokens {
+        let t = {
+            match t {
+                Err(e) => {
+                    println!();
+                    let mut s = String::new();
+                    l.fmt_context(&mut s, &e.pos, &e.pos).unwrap();
+                    eprintln!("{}", s);
+                    return Err(format!("{}",e))
+                },
+                Ok(t) => t,
+        }};
+        print!("{}", t);
+    }
     println!();
     println!("Text parsed okay");
     Ok(())

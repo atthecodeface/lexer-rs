@@ -49,8 +49,8 @@ pub trait LexerOfChar: Lexer {
     where
         <Self as Lexer>::State: PosnInCharStream;
     fn get_text(&self, start: Self::State, end: Self::State) -> &str;
-    fn consume_ascii_str(&self, state: Self::State, s: &str) -> Self::State;
-    fn consume_char(&self, state: Self::State, ch: char) -> Self::State;
+    fn consumed_ascii_str(&self, state: Self::State, s: &str) -> Self::State;
+    fn consumed_char(&self, state: Self::State, ch: char) -> Self::State;
     fn consumed_newline(&self, state: Self::State, num_bytes: usize) -> Self::State;
     fn consumed_chars(&self, state: Self::State, num_bytes: usize, num_chars: usize)
         -> Self::State;

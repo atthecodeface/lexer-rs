@@ -23,6 +23,7 @@ pub trait PosnInStream:
     /// num_char) this *must* only be invoked to move on to a new UTF8
     /// character boundary - hence num_bytes must be a (sum of)
     /// len_utf8 values for the text at byte offset of self.
+    #[must_use]
     fn advance_cols(self, _num_bytes: usize, _num_chars: usize) -> Self {
         self
     }
@@ -34,8 +35,21 @@ pub trait PosnInStream:
     /// to a new UTF8 character boundary - hence num_bytes must be a
     /// (sum of) len_utf8 values for the text at byte offset of self,
     /// the last character of which is a newline
+    #[must_use]
     fn advance_line(self, _num_bytes: usize) -> Self {
         self
+    }
+
+    /// Return the line number (if supported, else 0)
+    #[must_use]
+    fn line(&self) -> usize {
+        0
+    }
+
+    /// Return the column number (if supported, else 0)
+    #[must_use]
+    fn column(&self) -> usize {
+        0
     }
 
     /// Format self for an error - this can be the same format as

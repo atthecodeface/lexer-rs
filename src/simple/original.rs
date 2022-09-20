@@ -5,16 +5,6 @@ use crate::{
 };
 
 //a SimpleToken
-//tt SimpleKeyword
-pub trait SimpleKeyword: std::fmt::Debug + Copy + Clone + Sized {}
-
-impl SimpleKeyword for () {}
-impl SimpleKeyword for u8 {}
-impl SimpleKeyword for u16 {}
-impl SimpleKeyword for u32 {}
-impl SimpleKeyword for u64 {}
-impl SimpleKeyword for usize {}
-
 //tp SimpleToken
 #[derive(Debug, Clone, Copy)]
 pub enum SimpleToken<P: PosnInCharStream, K: SimpleKeyword> {
@@ -38,26 +28,18 @@ pub enum SimpleToken<P: PosnInCharStream, K: SimpleKeyword> {
     Char(P, char),
 }
 
-//ip TokenType for SimpleToken
-impl<P, K> TokenType for SimpleToken<P, K>
-where
-    P: PosnInCharStream,
-    K: SimpleKeyword,
-{
-}
-
 //ip SimpleToken
 impl<P, K> SimpleToken<P, K>
 where
     P: PosnInCharStream,
-    K: SimpleKeyword,
+    K: std::fmt::Debug + Copy + Clone + Sized,
 {
     //fp parse_char
     pub fn parse_char<'a, L>(
         stream: &L,
         state: L::State,
         ch: char,
-    ) -> LexerParseResult<L>
+    ) -> LexerParseResult<P, Self, <L::Error>>
     where L: LexerOfChar,
           L: Lexer<Token = Self, State = P>,
     {
@@ -87,7 +69,7 @@ where
         stream: &L,
         state: L::State,
         ch: char,
-    ) -> LexerParseResult<L>
+    ) -> LexerParseResult<P, Self, <L::Error>>
     where L: LexerOfChar,
           L: Lexer<Token = Self, State = P>,
     {
@@ -107,7 +89,7 @@ where
         stream: &L,
         state: L::State,
         ch: char,
-    ) -> LexerParseResult<L>
+    ) -> LexerParseResult<P, Self, <L::Error>>
     where L: LexerOfChar,
           L: Lexer<Token = Self, State = P>,
     {
@@ -125,7 +107,7 @@ where
         stream: &L,
         state: L::State,
         ch: char,
-    ) -> LexerParseResult<L>
+    ) -> LexerParseResult<P, Self, <L::Error>>
     where L: LexerOfChar,
           L: Lexer<Token = Self, State = P>,
     {
@@ -145,7 +127,7 @@ where
         ch: char,
         is_id_start: F1,
         is_id: F2,
-    ) -> LexerParseResult<L>
+    ) -> LexerParseResult<P, Self, <L::Error>>
     where L: LexerOfChar,
           L: Lexer<Token = Self, State = P>,
           F1: Fn(char) -> bool,
@@ -168,7 +150,7 @@ where
         state: L::State,
         _ch: char,
         keywords: &[(&[u8], K)],
-    ) -> LexerParseResult<L>
+    ) -> LexerParseResult<P, Self, <L::Error>>
     where L: LexerOfChar,
           L: Lexer<Token = Self, State = P>,
     {

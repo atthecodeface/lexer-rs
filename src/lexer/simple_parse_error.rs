@@ -13,8 +13,8 @@ pub struct SimpleParseError<P>
 where
     P: PosnInStream,
 {
-    ch: char,
-    pos: P,
+    pub ch: char,
+    pub pos: P,
 }
 
 //ip Error for SimpleParseError

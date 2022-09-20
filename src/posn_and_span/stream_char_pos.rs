@@ -29,13 +29,23 @@ where
 {
     fn advance_cols(mut self, num_bytes: usize, num_chars: usize) -> Self {
         self.byte_ofs += num_bytes;
-        self.pos.advance_cols(num_bytes, num_chars);
+        self.pos = self.pos.advance_cols(num_bytes, num_chars);
         self
     }
     fn advance_line(mut self, num_bytes: usize) -> Self {
         self.byte_ofs += num_bytes;
-        self.pos.advance_line(num_bytes);
+        self.pos = self.pos.advance_line(num_bytes);
         self
+    }
+    fn line(&self) -> usize {
+        self.pos.line()
+    }
+
+    fn column(&self) -> usize {
+        self.pos.column()
+    }
+    fn error_fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+        self.pos.error_fmt(fmt)
     }
 }
 

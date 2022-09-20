@@ -1,6 +1,6 @@
 use crate::PosnInStream;
 pub trait FmtContext<P> {
-    fn line_length(&self, posn: &P) -> usize;
+    fn line_length(&self, line:usize) -> usize;
 
     fn fmt_line(&self, f: &mut dyn std::fmt::Write, line: usize) -> std::fmt::Result;
 
@@ -108,7 +108,7 @@ pub trait FmtContext<P> {
                 if start.line() == end.line() {
                     end.column() - start.column()
                 } else {
-                    self.line_length(start)
+                    self.line_length(start.line())
                 }
             };
             self.fmt_context_single_line(fmt, start, num_cols)
