@@ -6,10 +6,10 @@ use crate::{Lexer, LexerError, LexerOfChar, LexerParseFn, LexerParseResult};
 use crate::{ParserIterator, PosnInCharStream, StreamCharSpan};
 
 //a Impl Lexer
-//tp TSSLexer
+//tp LexerOfStr
 // Cannot derive either Copy or Clone without that putting the same bound on T and E
 #[derive(Debug)]
-pub struct TSSLexer<'a, P, T, E>
+pub struct LexerOfStr<'a, P, T, E>
 where
     P: PosnInCharStream,
 {
@@ -20,11 +20,11 @@ where
     _phantom_error: PhantomData<&'a E>,
 }
 
-//ip Copy for TSSLexer<'a, P, T, E>
-impl<'a, P, T, E> Copy for TSSLexer<'a, P, T, E> where P: PosnInCharStream {}
+//ip Copy for LexerOfStr<'a, P, T, E>
+impl<'a, P, T, E> Copy for LexerOfStr<'a, P, T, E> where P: PosnInCharStream {}
 
-//ip Clone for TSSLexer<'a, P, T, E>
-impl<'a, P, T, E> Clone for TSSLexer<'a, P, T, E>
+//ip Clone for LexerOfStr<'a, P, T, E>
+impl<'a, P, T, E> Clone for LexerOfStr<'a, P, T, E>
 where
     P: PosnInCharStream,
 {
@@ -33,8 +33,8 @@ where
     }
 }
 
-//ip TSSLexer
-impl<'a, P, T, E> TSSLexer<'a, P, T, E>
+//ip LexerOfStr
+impl<'a, P, T, E> LexerOfStr<'a, P, T, E>
 where
     P: PosnInCharStream,
     T: Sized + std::fmt::Debug + Copy,
@@ -74,8 +74,8 @@ where
     }
 }
 
-//ip Lexer for TSSLexer
-impl<'a, P, T, E> Lexer for TSSLexer<'a, P, T, E>
+//ip Lexer for LexerOfStr
+impl<'a, P, T, E> Lexer for LexerOfStr<'a, P, T, E>
 where
     P: PosnInCharStream,
     T: Sized + std::fmt::Debug + Copy,
@@ -111,8 +111,8 @@ where
     }
 }
 
-//ip LexerOfChar for TSSLexer
-impl<'a, P, T, E> LexerOfChar for TSSLexer<'a, P, T, E>
+//ip LexerOfChar for LexerOfStr
+impl<'a, P, T, E> LexerOfChar for LexerOfStr<'a, P, T, E>
 where
     P: PosnInCharStream,
     T: Sized + std::fmt::Debug + Copy,
