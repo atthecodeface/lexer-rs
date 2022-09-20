@@ -3,10 +3,49 @@ use std::marker::PhantomData;
 
 use crate::BoxDynLexerParseFn;
 use crate::{Lexer, LexerError, LexerOfChar, LexerParseResult};
-use crate::{PosnInCharStream, StreamCharSpan, ParserIterator};
+use crate::{ParserIterator, PosnInCharStream, StreamCharSpan};
 
 //a LexerOfStr
 //tp LexerOfStr
+/// A [Lexer] of a [str], using an arbitrary stream position type,
+/// lexer token, and lexer error.
+///
+/// This provides implementations of [Lexer] and [LexerOfChar].
+///
+/// The [Lexer] implementation means that a [LexerOfStr] has a 'parse'
+/// method that can be invoked to parse a single token at a position
+/// within the [str], and another 'iter' method that can be invoked to
+/// generate an iterator that returns all the tokens in the [str]
+///
+/// If the iterator or parser return an Err, the that error is of the
+/// generic type 'E' supplied to the [LexerOfStr] which must implement
+/// [LexerError] of the generic position 'P' - so a failure to parse a
+/// character in the string can be indicated at a particular location
+/// (byte offset, with line number and column potentially).
+///
+/// The actual parsing of tokens is supported through the [Lexer]
+/// trait for both the 'parser' and 'iter' trait methods using a
+/// &[BoxDynLexerParseFn]. These must be boxed functions with the signature
+/// like:
+///
+/// ```ignore
+///    fn parse(stream: &LexerOfStr<P, T, E>, pos:P, ch:char) ->
+///               LexerParseResult<P, T, E>
+/// ```
+///
+/// where
+///
+/// ```ignore
+///    LexerParseResult<P, T, E> = Result<Option<P, T>, E>
+/// ```
+///
+/// See the [Lexer] trait for more details on these parse functions
+///
+/// The [LexerOfStr] also provides a [LexerOfChar] implementation,
+/// which provides methods that are can be used by the parse functions.
+///
+/// This provides methods to match strings, get 
+///
 // Cannot derive either Copy or Clone without that putting the same bound on T and E
 #[derive(Debug)]
 pub struct LexerOfStr<'a, P, T, E>
@@ -63,6 +102,16 @@ where
             text.chars().next()
         }
     }
+
+    //mp remaining_text
+    /// Get the remaining text from a position
+    fn remaining_text(&self, p: &P) -> &str {
+        // # Safety
+        //
+        // Safe if p is a valid Posn as then it must be a utf8
+        // character boundary
+        unsafe { self.text.get_unchecked(p.byte_ofs()..self.end) }
+    }
 }
 
 //a Impl Lexer, LexerOfChar
@@ -94,6 +143,8 @@ where
         }
         Ok(None)
     }
+
+    //mp iter
     fn iter<'iter>(
         &'iter self,
         parsers: &'iter [BoxDynLexerParseFn<'iter, Self>],
@@ -152,35 +203,6 @@ where
         unsafe { self.peek_at_offset(state.byte_ofs()) }
     }
 
-    //cp consumed_char
-    /// Become the span after consuming a particular char
-    fn consumed_char(&self, state: P, ch: char) -> P {
-        if ch == '\n' {
-            state.advance_line(1)
-        } else {
-            state.advance_cols(ch.len_utf8(), 1)
-        }
-    }
-
-    //cp consumed_ascii_str
-    /// Become the span after consuming a particular ascii string without newlines
-    fn consumed_ascii_str(&self, state: P, s: &str) -> P {
-        let n = s.len();
-        state.advance_cols(n, n)
-    }
-
-    //cp consumed_chars
-    /// Become the span after consuming a particular string of known character length
-    fn consumed_chars(&self, state: P, num_bytes: usize, num_chars: usize) -> P {
-        state.advance_cols(num_bytes, num_chars)
-    }
-
-    //cp consumed_newline
-    /// Become the stream span after a newline
-    fn consumed_newline(&self, state: P, num_bytes: usize) -> P {
-        state.advance_line(num_bytes)
-    }
-
     //mp matches_bytes
     /// Match the text at the offset with a str
     fn matches_bytes(&self, state: &P, s: &[u8]) -> bool {
@@ -193,13 +215,35 @@ where
         }
     }
 
-    //mp matches
+    //mp matches_str
     /// Match the text at the offset with a str
-    fn matches(&self, state: &P, s: &str) -> bool {
-        self.matches_bytes(state, s.as_bytes())
+    fn matches_str(&self, pos: &P, pat: &str) -> bool {
+        self.remaining_text(pos).starts_with(pat)
     }
 
-    //p do_while
+    //mp matches - awaiting Pattern stabilization
+    // Match the text at the offset with a str
+    // fn matches<'call, Pat:std::str::pattern::Pattern<'call>>(&self, pos: &P, pat: Pat) -> bool {
+    // self.remaining_text(pos).starts_with(pat)
+    // }
+
+    //cp consumed
+    fn consumed(&self, mut state: P, mut n: usize) -> P {
+        for ch in self.remaining_text(&state).chars() {
+            if n == 0 {
+                break;
+            }
+            if ch == '\n' {
+                state = state.advance_line(1)
+            } else {
+                state = state.advance_cols(ch.len_utf8(), 1)
+            }
+            n -= 1;
+        }
+        state
+    }
+    
+    //mp do_while
     fn do_while<F: Fn(usize, char) -> bool>(
         &self,
         mut state: P,
@@ -224,7 +268,7 @@ where
             ofs += ch.len_utf8();
         }
         // Does not work if newlines are involved
-        state = self.consumed_chars(state, ofs - start.byte_ofs(), n);
+        state = unsafe { self.consumed_chars(state, ofs - start.byte_ofs(), n) };
         (state, Some((start, n)))
     }
 }

@@ -13,7 +13,10 @@ pub struct SimpleParseError<P>
 where
     P: PosnInStream,
 {
+    /// The character which could not be matched to a token
     pub ch: char,
+
+    /// The position of the character in the stream
     pub pos: P,
 }
 

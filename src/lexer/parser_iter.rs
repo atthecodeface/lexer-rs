@@ -1,6 +1,6 @@
 //a Imports
-use crate::{BoxDynLexerParseFn, LexerParseResult};
-use crate::{Lexer, LexerParseFn};
+use crate::{BoxDynLexerParseFn};
+use crate::{Lexer};
 
 //a ParserIterator
 //tp ParserIterator

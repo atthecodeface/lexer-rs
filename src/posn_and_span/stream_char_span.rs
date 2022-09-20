@@ -5,7 +5,9 @@ use crate::PosnInCharStream;
 
 //a StreamCharSpan
 //tp StreamCharSpan
-/// A span within a str
+/// This provides a span between two byte offsets within a stream; the start and end have
+/// an associated position that might also ccurately provide line and
+/// column numbers
 #[derive(Debug, Clone, Copy)]
 pub struct StreamCharSpan<P>
 where

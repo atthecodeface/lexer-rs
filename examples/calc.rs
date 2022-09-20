@@ -1,10 +1,10 @@
 //a Imports
 use std::env;
 
-use lexer::SimpleParseError;
 use lexer::LineColumn;
+use lexer::SimpleParseError;
 use lexer::StreamCharPos;
-use lexer::{Lexer, LexerOfChar, LexerParseResult, LexerOfStr, LexerOfString, FmtContext};
+use lexer::{FmtContext, Lexer, LexerOfChar, LexerOfStr, LexerOfString, LexerParseResult};
 
 //a CalcOp
 //tp CalcOp
@@ -115,7 +115,6 @@ fn parse_whitespace_fn(stream: &TextStream, state: TextPos, ch: char) -> CalcLex
 }
 
 //a Main
-use std::marker::PhantomData;
 type BoxDynCalcLexFn<'a> =
     Box<dyn for<'call> Fn(&'call TextStream, TextPos, char) -> CalcLexResult + 'a>;
 struct CalcTokenParser<'a> {
@@ -134,11 +133,15 @@ impl<'a> CalcTokenParser<'a> {
         parsers.push(Box::new(parse_whitespace_fn) as BoxDynCalcLexFn);
         Self { parsers }
     }
+    /*
     pub fn add_parser<F: Fn(&TextStream, TextPos, char) -> CalcLexResult + 'a>(&mut self, f: F) {
         self.parsers.push(Box::new(f));
-    }
+    }*/
 
-    pub fn iter<'iter>(&'iter self, t:&'iter TextStream<'iter>) -> impl Iterator<Item = Result<CalcToken, SimpleParseError<TextPos>>> + 'iter {
+    pub fn iter<'iter>(
+        &'iter self,
+        t: &'iter TextStream<'iter>,
+    ) -> impl Iterator<Item = Result<CalcToken, SimpleParseError<TextPos>>> + 'iter {
         t.iter(&self.parsers)
     }
 }
@@ -152,10 +155,9 @@ fn main() -> Result<(), String> {
     }
     let args_as_string = args[1..].join(" ");
     let c = CalcTokenParser::new();
-    let l = LexerOfString::default()
-        .set_text(args_as_string);
+    let l = LexerOfString::default().set_text(args_as_string);
     let ts = l.lexer();
-    
+
     // let ts = TextStream::new(&args_as_string);
 
     println!("Parsing");
@@ -168,10 +170,11 @@ fn main() -> Result<(), String> {
                     let mut s = String::new();
                     l.fmt_context(&mut s, &e.pos, &e.pos).unwrap();
                     eprintln!("{}", s);
-                    return Err(format!("{}",e))
-                },
+                    return Err(format!("{}", e));
+                }
                 Ok(t) => t,
-        }};
+            }
+        };
         print!("{}", t);
     }
     println!();

@@ -6,7 +6,7 @@
 /// parser within a stream in a manner that is useful for
 /// human-readable error messages
 ///
-/// A simple implementation can be NULL, if the position is not
+/// A simple implementation can be null, if the position is not
 /// critical for error messages for the token parser - for example,
 /// parsing a simple string in a test.
 ///

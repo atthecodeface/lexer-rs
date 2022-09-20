@@ -3,6 +3,9 @@ use crate::{PosnInCharStream, PosnInStream};
 
 //a StreamCharPos
 //tp StreamCharPos
+/// This provides the byte offset of a character within a stream, with
+/// an associated position that might also accurately provide line and
+/// column numbers of the position
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Hash)]
 pub struct StreamCharPos<P>
 where
@@ -17,6 +20,9 @@ impl<P> StreamCharPos<P>
 where
     P: PosnInStream,
 {
+    /// Get the descriptive position that [Self] includes; if that
+    /// type provides them accurately, this can give the line number
+    /// and column number of the position
     pub fn pos(&self) -> P {
         self.pos
     }

@@ -3,7 +3,10 @@ use crate::PosnInStream;
 
 //a LineColumn
 //tp LineColumn
-/// A line + column within a text stream
+/// A line and column within a text stream
+///
+/// This provides the [PosnInStream] trait, which provides methods to
+/// retrieve the line and column values of the state.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub struct LineColumn {
     line: usize,
@@ -43,6 +46,6 @@ impl PosnInStream for LineColumn {
         self
     }
     fn error_fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        write!(fmt,"line {} column {}", self.line, self.column)
+        write!(fmt, "line {} column {}", self.line, self.column)
     }
 }

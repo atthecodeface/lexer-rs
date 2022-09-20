@@ -59,15 +59,12 @@ impl<'a, 'iter> Iterator for IterRefInt<'a, 'iter> {
     }
 }
 
-fn double(x: &usize) -> usize {
-    2 * *x
-}
 fn double_r(r: &RefInt) -> usize {
     2 * *(r.0)
 }
 
 fn main() {
-    let dbl_usize = [Box::new(double) as BoxOpDynFnS<usize>];
+    // let dbl_usize = [Box::new(double) as BoxOpDynFnS<usize>];
     let dbl_ref = [Box::new(double_r) as BoxOpDynFnS<RefInt>];
 
     let box_3 = Box::new(3);
