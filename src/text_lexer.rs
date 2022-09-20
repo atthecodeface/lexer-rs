@@ -1,9 +1,9 @@
 //a Imports
 use std::marker::PhantomData;
 
+use crate::BoxDynLexerParseFn;
 use crate::{Lexer, LexerError, LexerOfChar, LexerParseFn, LexerParseResult};
-use crate::{PosnInCharStream, StreamCharSpan, ParserIterator};
-use crate::{BoxDynLexerParseFn};
+use crate::{ParserIterator, PosnInCharStream, StreamCharSpan};
 
 //a Impl Lexer
 //tp TSSLexer
@@ -54,11 +54,10 @@ where
     }
 
     //mp iter_tokens
-    pub fn iter_tokens<'iter> (
+    pub fn iter_tokens<'iter>(
         &'iter self,
         parsers: &'iter [BoxDynLexerParseFn<'iter, Self>],
-    ) -> ParserIterator<'iter, Self>
-    {
+    ) -> ParserIterator<'iter, Self> {
         let state = P::default();
         ParserIterator::new(self, state, parsers)
     }
@@ -87,8 +86,11 @@ where
     type State = P;
 
     //mp parse
-    fn parse<'iter>(&'iter self, state: Self::State, parsers: &[BoxDynLexerParseFn<'iter, Self> ]) -> LexerParseResult<Self::State, Self::Token, Self::Error>
-        {
+    fn parse<'iter>(
+        &'iter self,
+        state: Self::State,
+        parsers: &[BoxDynLexerParseFn<'iter, Self>],
+    ) -> LexerParseResult<Self::State, Self::Token, Self::Error> {
         if let Some(ch) = self.peek_at(&state) {
             for p in parsers {
                 let result = p(&self, state, ch)?;
@@ -100,8 +102,10 @@ where
         }
         Ok(None)
     }
-    fn iter<'iter> (&'iter self, parsers: &'iter [BoxDynLexerParseFn<'iter, Self> ]) -> Box<dyn Iterator<Item = Result<T, E>>+'iter>
-    {
+    fn iter<'iter>(
+        &'iter self,
+        parsers: &'iter [BoxDynLexerParseFn<'iter, Self>],
+    ) -> Box<dyn Iterator<Item = Result<T, E>> + 'iter> {
         let state = Default::default();
         Box::new(ParserIterator::new(self, state, parsers))
     }
@@ -153,9 +157,7 @@ where
     /// 'state' is maintained as a utf8 character point boundary
     /// within or at the end of the 'str' borrowed by [Self]
     fn peek_at(&self, state: &P) -> Option<char> {
-        unsafe {
-            self.peek_at_offset(state.byte_ofs())
-        }
+        unsafe { self.peek_at_offset(state.byte_ofs()) }
     }
 
     //cp consume_char

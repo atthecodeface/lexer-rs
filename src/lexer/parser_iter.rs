@@ -1,6 +1,6 @@
 //a Imports
+use crate::{BoxDynLexerParseFn, LexerParseResult};
 use crate::{Lexer, LexerParseFn};
-use crate::{LexerParseResult, BoxDynLexerParseFn};
 
 //a ParserIterator
 //tp ParserIterator
@@ -35,7 +35,7 @@ where
 impl<'a, L> Iterator for ParserIterator<'a, L>
 where
     L: Lexer,
-//    F : std::ops::Deref<Target = dyn Fn(&'a L, <L as Lexer>::State, char) -> LexerParseResult<<L as Lexer>::State, <L as Lexer>::Token, <L as Lexer>::Error> + 'a>,
+    //    F : std::ops::Deref<Target = dyn Fn(&'a L, <L as Lexer>::State, char) -> LexerParseResult<<L as Lexer>::State, <L as Lexer>::Token, <L as Lexer>::Error> + 'a>,
 {
     type Item = Result<L::Token, L::Error>;
     fn next(&mut self) -> Option<Self::Item> {

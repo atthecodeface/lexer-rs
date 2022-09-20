@@ -11,8 +11,7 @@ use crate::{PosnInCharStream, StreamCharSpan};
 /// is a cycle in that Lexer::Error will in general depend on Lexer
 /// which depends on Lexer::Error... This breaks code (and the compiler
 /// tends to hang forever)
-pub trait LexerError<P> : Sized + std::error::Error
-{
+pub trait LexerError<P>: Sized + std::error::Error {
     /// Return an error indicating that a bad character (could not be
     /// matched for a token) has occurred at the position indicated by
     /// the state
@@ -25,8 +24,15 @@ pub trait Lexer: std::fmt::Debug {
     type Token: Sized + std::fmt::Debug + Copy;
     type State: Sized + Copy + std::fmt::Debug + Default;
     type Error: LexerError<Self::State>;
-    fn parse<'a>(&'a self, state: Self::State, parsers: &[BoxDynLexerParseFn<'a, Self> ]) -> LexerParseResult<Self::State, Self::Token, Self::Error>;
-    fn iter<'iter> (&'iter self, parsers: &'iter [BoxDynLexerParseFn<'iter, Self> ]) -> Box<dyn Iterator<Item = Result<Self::Token, Self::Error>> +'iter>;
+    fn parse<'a>(
+        &'a self,
+        state: Self::State,
+        parsers: &[BoxDynLexerParseFn<'a, Self>],
+    ) -> LexerParseResult<Self::State, Self::Token, Self::Error>;
+    fn iter<'iter>(
+        &'iter self,
+        parsers: &'iter [BoxDynLexerParseFn<'iter, Self>],
+    ) -> Box<dyn Iterator<Item = Result<Self::Token, Self::Error>> + 'iter>;
 }
 
 //tt LexerOfChar
@@ -65,12 +71,16 @@ pub trait LexerOfChar: Lexer {
 /// result that must be indicated by a lifetime, where the actual result *does not*.
 ///
 /// This causes problems for clients
-pub type LexerParseResult<S, T, E> =
-    Result<Option<(S, T)>, E>;
+pub type LexerParseResult<S, T, E> = Result<Option<(S, T)>, E>;
 
 //tp LexerParseFn
 /// The type of a parse function
-pub type LexerParseFn<L> = fn(lexer: &L, <L as Lexer>::State, char) -> LexerParseResult<<L as Lexer>::State, <L as Lexer>::Token, <L as Lexer>::Error>;
+pub type LexerParseFn<L> =
+    fn(
+        lexer: &L,
+        <L as Lexer>::State,
+        char,
+    ) -> LexerParseResult<<L as Lexer>::State, <L as Lexer>::Token, <L as Lexer>::Error>;
 
 //tp BoxDynLexerParseFn
 /// The type of a parse function, when Boxed as a dyn trait
@@ -89,4 +99,14 @@ pub type LexerParseFn<L> = fn(lexer: &L, <L as Lexer>::State, char) -> LexerPars
 /// Note that the use of 'as Box...' is required, as without it type
 /// inference will kick in on the Box::new() to infer parse_char_fn as
 /// a precise type, whereas the more generic dyn Fn is what is required.
-pub type BoxDynLexerParseFn<'a, L> = Box<dyn for <'call> Fn(&'call L, <L as Lexer>::State, char) -> LexerParseResult<<L as Lexer>::State, <L as Lexer>::Token, <L as Lexer>::Error>  + 'a>;
+pub type BoxDynLexerParseFn<'a, L> = Box<
+    dyn for<'call> Fn(
+            &'call L,
+            <L as Lexer>::State,
+            char,
+        ) -> LexerParseResult<
+            <L as Lexer>::State,
+            <L as Lexer>::Token,
+            <L as Lexer>::Error,
+        > + 'a,
+>;

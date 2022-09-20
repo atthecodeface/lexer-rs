@@ -1,10 +1,10 @@
 //a Imports
 use std::env;
 
+use lexer::LexerParseError;
 use lexer::LineColumn;
 use lexer::StreamCharPos;
-use lexer::LexerParseError;
-use lexer::{LexerParseResult, TSSLexer, LexerOfChar, Lexer};
+use lexer::{Lexer, LexerOfChar, LexerParseResult, TSSLexer};
 // use lexer::LexerParseFn;
 
 //a CalcOp
@@ -71,8 +71,7 @@ type CalcLexResult = LexerParseResult<TextPos, CalcToken, LexerParseError<TextPo
 //fi parse_char_fn
 /// Parser function to return a Token if it is a known one
 /// character token otherwise it returns None
-fn parse_char_fn(stream: &TextStream, state: TextPos, ch: char) -> CalcLexResult
-{
+fn parse_char_fn(stream: &TextStream, state: TextPos, ch: char) -> CalcLexResult {
     if let Some(t) = {
         match ch {
             '+' => Some(CalcToken::Op(CalcOp::Plus)),
@@ -92,8 +91,7 @@ fn parse_char_fn(stream: &TextStream, state: TextPos, ch: char) -> CalcLexResult
 
 //fi parse_value_fn
 /// Parser function to return a Token if the text matches a value
-fn parse_value_fn(stream: &TextStream, state: TextPos, ch: char) -> CalcLexResult
-{
+fn parse_value_fn(stream: &TextStream, state: TextPos, ch: char) -> CalcLexResult {
     let is_digit = |_, ch| ('0'..='9').contains(&ch);
     let (state, opt_x) = stream.do_while(state, ch, &is_digit);
     if let Some((start, _n)) = opt_x {
@@ -107,8 +105,7 @@ fn parse_value_fn(stream: &TextStream, state: TextPos, ch: char) -> CalcLexResul
 
 //fi parse_whitespace_fn
 /// Parser function to return a Token if whitespace
-fn parse_whitespace_fn(stream: &TextStream, state: TextPos, ch: char) -> CalcLexResult
-{
+fn parse_whitespace_fn(stream: &TextStream, state: TextPos, ch: char) -> CalcLexResult {
     let is_whitespace = |_n, ch| ch == ' ' || ch == '\t' || ch == '\n';
     let (state, opt_x) = stream.do_while(state, ch, &is_whitespace);
     if let Some((_start, _n)) = opt_x {
@@ -118,14 +115,14 @@ fn parse_whitespace_fn(stream: &TextStream, state: TextPos, ch: char) -> CalcLex
     }
 }
 
-
 //a Main
 use std::marker::PhantomData;
-type BoxDynCalcLexFn<'a> = Box<dyn for <'call> Fn(&'call TextStream, TextPos, char) -> CalcLexResult + 'a>;
+type BoxDynCalcLexFn<'a> =
+    Box<dyn for<'call> Fn(&'call TextStream, TextPos, char) -> CalcLexResult + 'a>;
 struct CalcTokenParser<'a> {
     parsers: Vec<BoxDynCalcLexFn<'a>>,
 }
-impl <'a> CalcTokenParser<'a> {
+impl<'a> CalcTokenParser<'a> {
     pub fn new() -> Self {
         let mut parsers = Vec::new();
 
@@ -138,7 +135,7 @@ impl <'a> CalcTokenParser<'a> {
         parsers.push(Box::new(parse_whitespace_fn) as BoxDynCalcLexFn);
         Self { parsers }
     }
-    pub fn add_parser<F:Fn(&TextStream, TextPos, char) -> CalcLexResult + 'a>(&mut self, f:F) {
+    pub fn add_parser<F: Fn(&TextStream, TextPos, char) -> CalcLexResult + 'a>(&mut self, f: F) {
         self.parsers.push(Box::new(f));
     }
     //pub fn iter<'iter>(&'iter self, t:&'iter TextStream<'iter>) -> lexer::ParserIterator<'iter, TextStream<'iter>, BoxDynCalcLexFn<'iter>> {
@@ -161,12 +158,12 @@ fn main() -> Result<(), String> {
     ];
 
     /*
-    let tokens = ts.iter_tokens(&parsers);
-    for t in tokens {
-        let t = t.map_err(|e| format!("{}", e))?;
-        print!("{}", t);
-    }
-*/
+        let tokens = ts.iter_tokens(&parsers);
+        for t in tokens {
+            let t = t.map_err(|e| format!("{}", e))?;
+            print!("{}", t);
+        }
+    */
     println!();
     println!("Text parsed okay");
     Ok(())
@@ -207,4 +204,3 @@ fn test_lex_1() {
     let x = ts.get_token().unwrap();
     assert!(x.is_none());
 }
-

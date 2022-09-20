@@ -61,7 +61,7 @@ pub trait PosnInCharStream: PosnInStream {
     //mp byte_ofs
     /// Return the byte offset into the stream of the position.
     ///
-    /// This must *always* be a UTF8 character boundary; it will be so 
+    /// This must *always* be a UTF8 character boundary; it will be so
     fn byte_ofs(&self) -> usize;
 }
 
@@ -81,4 +81,3 @@ impl PosnInCharStream for usize {
         *self
     }
 }
-
