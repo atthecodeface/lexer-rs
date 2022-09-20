@@ -3,8 +3,7 @@ use std::marker::PhantomData;
 
 use crate::{Lexer, LexerError, LexerOfChar, LexerParseFn, LexerParseResult};
 use crate::{PosnInCharStream, StreamCharSpan, ParserIterator};
-
-type BoxDynLexerPasrseFn<'a, L> = Box<dyn Fn(&'a L, <L as Lexer>::State, char) -> LexerParseResult<<L as Lexer>::State, <L as Lexer>::Token, <L as Lexer>::Error> + 'a>;
+use crate::{BoxDynLexerPasrseFn};
 
 //a Impl Lexer
 //tp TSSLexer
@@ -57,8 +56,8 @@ where
     //mp iter_tokens
     pub fn iter_tokens<'iter> (
         &'iter self,
-        // parsers: &'iter [BoxDynLexerPasrseFn<'iter, Self>],
-        parsers: &'iter [Box<dyn 'iter + Fn(&'iter Self, P, char) -> LexerParseResult<P, T, E>>]
+        parsers: &'iter [BoxDynLexerPasrseFn<'iter, Self>],
+        // parsers: &'iter [Box<dyn 'iter + Fn(&'iter Self, P, char) -> LexerParseResult<P, T, E>>]
             ) -> ParserIterator<'iter, Self>
     // ) -> std::array::IntoIter<Result<u32,u32>,2> // ParserIterator<'iter, Self>
     // where 'a: 'iter

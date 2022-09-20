@@ -74,7 +74,7 @@ pub trait Lexer: std::fmt::Debug {
         ParserIterator::new(self, state, parsers)
     }
 }
-type BoxDynLexerPasrseFn<'a, L> = Box<dyn Fn(&'a L, <L as Lexer>::State, char) -> LexerParseResult<<L as Lexer>::State, <L as Lexer>::Token, <L as Lexer>::Error>  + 'a>;
+pub type BoxDynLexerPasrseFn<'a, L> = Box<dyn for <'call> Fn(&'call L, <L as Lexer>::State, char) -> LexerParseResult<<L as Lexer>::State, <L as Lexer>::Token, <L as Lexer>::Error>  + 'a>;
 
 //tt LexerOfChar
 // Requires Lexer::State : PosnInCharStream>

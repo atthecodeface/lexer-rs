@@ -4,8 +4,7 @@ use crate::{Lexer, LexerParseFn};
 //a ParserIterator
 //tp ParserIterator
 /// An iterator over a Lexer presenting the parsed Tokens from it
-use crate::LexerParseResult;
-type BoxDynLexerPasrseFn<'a, L> = Box<dyn Fn(&'a L, <L as Lexer>::State, char) -> LexerParseResult<<L as Lexer>::State, <L as Lexer>::Token, <L as Lexer>::Error>  + 'a>;
+use crate::{LexerParseResult, BoxDynLexerPasrseFn};
 
 pub struct ParserIterator<'a, L>
 where

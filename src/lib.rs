@@ -20,3 +20,4 @@ pub use text_lexer::TSSLexer;
 pub use token_parse_error::LexerParseError;
 pub use traits::{Lexer, LexerError, LexerOfChar, LexerParseFn, LexerParseResult};
 pub use traits::{PosnInCharStream, PosnInStream};
+pub use traits::BoxDynLexerPasrseFn;

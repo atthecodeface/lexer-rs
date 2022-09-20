@@ -121,7 +121,7 @@ fn parse_whitespace_fn(stream: &TextStream, state: TextPos, ch: char) -> CalcLex
 
 //a Main
 use std::marker::PhantomData;
-type BoxDynCalcLexFn<'a> = Box<dyn Fn(&TextStream, TextPos, char) -> CalcLexResult + 'a>;
+type BoxDynCalcLexFn<'a> = Box<dyn for <'call> Fn(&'call TextStream, TextPos, char) -> CalcLexResult + 'a>;
 struct CalcTokenParser<'a> {
     parsers: Vec<BoxDynCalcLexFn<'a>>,
 }
@@ -160,13 +160,14 @@ fn main() -> Result<(), String> {
         Box::new(parse_whitespace_fn),
     ];
 
-/*    let tokens = ts.iter_tokens(&parsers);
+    /*
+    let tokens = ts.iter_tokens(&parsers);
     for t in tokens {
         let t = t.map_err(|e| format!("{}", e))?;
         print!("{}", t);
     }
 */
-    println!("");
+    println!();
     println!("Text parsed okay");
     Ok(())
 }
