@@ -57,15 +57,10 @@ where
     pub fn iter_tokens<'iter> (
         &'iter self,
         parsers: &'iter [BoxDynLexerPasrseFn<'iter, Self>],
-        // parsers: &'iter [Box<dyn 'iter + Fn(&'iter Self, P, char) -> LexerParseResult<P, T, E>>]
-            ) -> ParserIterator<'iter, Self>
-    // ) -> std::array::IntoIter<Result<u32,u32>,2> // ParserIterator<'iter, Self>
-    // where 'a: 'iter
-    //        where F : std::ops::Deref<Target = dyn Fn(&'iter Self, P, char) -> LexerParseResult<P, T, E> + 'iter>
+    ) -> ParserIterator<'iter, Self>
     {
         let state = P::default();
         ParserIterator::new(self, state, parsers)
-        // [Ok(0),Err(0)].into_iter()
     }
 
     //mp peek_at_offset
