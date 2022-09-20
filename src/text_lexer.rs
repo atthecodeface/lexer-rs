@@ -88,7 +88,6 @@ where
 
     //mp parse
     fn parse<'iter>(&'iter self, state: Self::State, parsers: &[BoxDynLexerPasrseFn<'iter, Self> ]) -> LexerParseResult<Self::State, Self::Token, Self::Error>
-    // where F : std::ops::Deref<Target = dyn Fn(&'iter Self, P, char) -> LexerParseResult<P, T, E> + 'iter>
         {
         if let Some(ch) = self.peek_at(&state) {
             for p in parsers {
@@ -100,6 +99,11 @@ where
             return Err(E::failed_to_parse(state, ch));
         }
         Ok(None)
+    }
+    fn iter<'iter> (&'iter self, parsers: &'iter [BoxDynLexerPasrseFn<'iter, Self> ]) -> Box<dyn Iterator<Item = Result<T, E>>+'iter>
+    {
+        let state = Default::default();
+        Box::new(ParserIterator::new(self, state, parsers))
     }
 }
 

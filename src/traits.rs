@@ -64,12 +64,7 @@ pub trait Lexer: std::fmt::Debug {
     type State: Sized + Copy + std::fmt::Debug + Default;
     type Error: LexerError<Self::State>;
     fn parse<'a>(&'a self, state: Self::State, parsers: &[BoxDynLexerPasrseFn<'a, Self> ]) -> LexerParseResult<Self::State, Self::Token, Self::Error>;
-    fn iter<'iter> (&'iter self, parsers: &'iter [BoxDynLexerPasrseFn<'iter, Self> ]) -> ParserIterator<'iter, Self>
-    where Self:Sized ,        
-    {
-        let state = Default::default();
-        ParserIterator::new(self, state, parsers)
-    }
+    fn iter<'iter> (&'iter self, parsers: &'iter [BoxDynLexerPasrseFn<'iter, Self> ]) -> Box<dyn Iterator<Item = Result<Self::Token, Self::Error>> +'iter>;
 }
 pub type BoxDynLexerPasrseFn<'a, L> = Box<dyn for <'call> Fn(&'call L, <L as Lexer>::State, char) -> LexerParseResult<<L as Lexer>::State, <L as Lexer>::Token, <L as Lexer>::Error>  + 'a>;
 
