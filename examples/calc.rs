@@ -155,12 +155,13 @@ fn main() -> Result<(), String> {
     let args_as_string = args[1..].join(" ");
     let ts = TextStream::new(&args_as_string);
     let parsers = [
-        parse_char_fn,
-        parse_value_fn,
-        parse_whitespace_fn,
+        Box::new(parse_char_fn) as BoxDynCalcLexFn,
+        Box::new(parse_value_fn),
+        Box::new(parse_whitespace_fn),
     ];
 
-/*    for t in ts.into_iter(&parsers) {
+/*    let tokens = ts.iter_tokens(&parsers);
+    for t in tokens {
         let t = t.map_err(|e| format!("{}", e))?;
         print!("{}", t);
     }
