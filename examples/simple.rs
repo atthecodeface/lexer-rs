@@ -2,7 +2,7 @@
 use lexer::SimpleParseError;
 use lexer::{StreamCharSpan, StreamCharPos, LineColumn};
 use lexer::PosnInCharStream;
-use lexer::{FmtContext, Lexer, LexerOfChar, LexerOfStr, LexerOfString, LexerParseResult};
+use lexer::{FmtContext, Lexer, CharStream, LexerOfStr, LexerOfString, LexerParseResult};
 
 //a SimpleToken
 //tp SimpleToken
@@ -42,7 +42,7 @@ where
         state: L::State,
         ch: char,
     ) -> LexerParseResult<P, Self, L::Error>
-    where L: LexerOfChar<P>,
+    where L: CharStream<P>,
           L: Lexer<Token = Self, State = P>,
     {
         let pos = state;
@@ -72,7 +72,7 @@ where
         state: L::State,
         ch: char,
     ) -> LexerParseResult<P, Self, L::Error>
-    where L: LexerOfChar<P>,
+    where L: CharStream<P>,
           L: Lexer<Token = Self, State = P>,
     {
         match stream.do_while(state, ch, &|n, ch| {
@@ -92,7 +92,7 @@ where
         state: L::State,
         ch: char,
     ) -> LexerParseResult<P, Self, L::Error>
-    where L: LexerOfChar<P>,
+    where L: CharStream<P>,
           L: Lexer<Token = Self, State = P>,
     {
         match stream.do_while(state, ch, &|_, ch| ch.is_ascii_digit()) {
@@ -110,7 +110,7 @@ where
         state: L::State,
         ch: char,
     ) -> LexerParseResult<P, Self, L::Error>
-    where L: LexerOfChar<P>,
+    where L: CharStream<P>,
           L: Lexer<Token = Self, State = P>,
     {
         match stream.do_while(state, ch, &|_, ch| (ch == ' ' || ch == '\t')) {
@@ -130,7 +130,7 @@ where
         is_id_start: F1,
         is_id: F2,
     ) -> LexerParseResult<P, Self, L::Error>
-    where L: LexerOfChar<P>,
+    where L: CharStream<P>,
           L: Lexer<Token = Self, State = P>,
           F1: Fn(char) -> bool,
           F2: Fn(char) -> bool    
@@ -153,7 +153,7 @@ where
         _ch: char,
         keywords: &[(&[u8], K)],
     ) -> LexerParseResult<P, Self, L::Error>
-    where L: LexerOfChar<P>,
+    where L: CharStream<P>,
           L: Lexer<Token = Self, State = P>,
     {
         for (k, v) in keywords {
@@ -169,7 +169,7 @@ where
     //zz All done
 }
 
-fn parse_value_fn<L:LexerOfChar<TextPos> + Lexer<State = TextPos, Token = LexToken, Error = LexError>>(stream: &L, state: TextPos, ch: char) -> LexerParseResult<TextPos, LexToken, LexError> {
+fn parse_value_fn<L:CharStream<TextPos> + Lexer<State = TextPos, Token = LexToken, Error = LexError>>(stream: &L, state: TextPos, ch: char) -> LexerParseResult<TextPos, LexToken, LexError> {
     let is_digit = |_, ch| ('0'..='9').contains(&ch);
     let (state, opt_x) = stream.do_while(state, ch, &is_digit);
     if let Some((start, _n)) = opt_x {

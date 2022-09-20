@@ -114,7 +114,7 @@ mod lexer;
 mod posn_and_span;
 
 pub use char_stream::FmtContext;
-pub use char_stream::LexerOfChar;
+pub use char_stream::CharStream;
 
 pub use posn_and_span::LineColumn;
 pub use posn_and_span::StreamCharPos;

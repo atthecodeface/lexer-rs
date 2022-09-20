@@ -4,7 +4,7 @@ use std::env;
 use lexer::LineColumn;
 use lexer::SimpleParseError;
 use lexer::StreamCharPos;
-use lexer::{FmtContext, Lexer, LexerOfChar, LexerOfStr, LexerOfString, LexerParseResult};
+use lexer::{FmtContext, Lexer, CharStream, LexerOfStr, LexerOfString, LexerParseResult};
 
 //a CalcOp
 //tp CalcOp

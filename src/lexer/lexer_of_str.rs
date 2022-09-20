@@ -2,7 +2,7 @@
 use std::marker::PhantomData;
 
 use crate::BoxDynLexerParseFn;
-use crate::{Lexer, LexerError, LexerOfChar, LexerParseResult};
+use crate::{Lexer, LexerError, CharStream, LexerParseResult};
 use crate::{ParserIterator, PosnInCharStream, StreamCharSpan};
 
 //a LexerOfStr
@@ -10,7 +10,7 @@ use crate::{ParserIterator, PosnInCharStream, StreamCharSpan};
 /// A [Lexer] of a [str], using an arbitrary stream position type,
 /// lexer token, and lexer error.
 ///
-/// This provides implementations of [Lexer] and [LexerOfChar].
+/// This provides implementations of [Lexer] and [CharStream].
 ///
 /// The [Lexer] implementation means that a [LexerOfStr] has a 'parse'
 /// method that can be invoked to parse a single token at a position
@@ -41,7 +41,7 @@ use crate::{ParserIterator, PosnInCharStream, StreamCharSpan};
 ///
 /// See the [Lexer] trait for more details on these parse functions
 ///
-/// The [LexerOfStr] also provides a [LexerOfChar] implementation,
+/// The [LexerOfStr] also provides a [CharStream] implementation,
 /// which provides methods that are can be used by the parse functions.
 ///
 /// This provides methods to match strings, get 
@@ -114,7 +114,7 @@ where
     }
 }
 
-//a Impl Lexer, LexerOfChar
+//a Impl Lexer, CharStream
 //ip Lexer for LexerOfStr
 impl<'a, P, T, E> Lexer for LexerOfStr<'a, P, T, E>
 where
@@ -154,8 +154,8 @@ where
     }
 }
 
-//ip LexerOfChar for LexerOfStr
-impl<'a, P, T, E> LexerOfChar<P> for LexerOfStr<'a, P, T, E>
+//ip CharStream for LexerOfStr
+impl<'a, P, T, E> CharStream<P> for LexerOfStr<'a, P, T, E>
 where
     P: PosnInCharStream,
     T: Sized + std::fmt::Debug + Copy,
