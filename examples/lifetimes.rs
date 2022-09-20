@@ -1,5 +1,6 @@
 //a Lifetimes
 type BoxOpDynFn<'a> = Box<dyn for <'call> Fn(&'call usize) -> usize + 'a>;
+type BoxOpDynFnS<'a, S> = Box<dyn for <'call> Fn(&'call S) -> usize + 'a>;
 
 struct RefInt <'a> (&'a usize);
 impl <'a> RefInt<'a> {
@@ -13,6 +14,14 @@ impl <'a> RefInt<'a> {
     fn iter_map<'iter> (
         &'iter self,
         _fns: &'iter [BoxOpDynFn<'iter>]
+    ) -> IterRefInt<'a, 'iter>
+    {
+        IterRefInt { max:self, n:0 }
+    }
+
+    fn iter_map_s<'iter> (
+        &'iter self,
+        _fns: &'iter [BoxOpDynFnS<'iter, Self>],
     ) -> IterRefInt<'a, 'iter>
     {
         IterRefInt { max:self, n:0 }
@@ -34,11 +43,14 @@ impl <'a, 'iter> Iterator for IterRefInt<'a, 'iter> {
 }
 
 fn double(x:&usize) -> usize {  2 * *x }
-fn inc(x:&usize) -> usize { *x + 1 }
+fn double_r(r:&RefInt) -> usize {  2 * *(r.0) }
 
 fn main() {
-    let dbl_plus_one = [
+    let dbl_usize = [
         Box::new(double) as BoxOpDynFn,
+    ];
+    let dbl_ref = [
+        Box::new(double_r) as BoxOpDynFnS<RefInt>,
     ];
     
     let box_3 = Box::new(3);
@@ -46,5 +58,8 @@ fn main() {
     assert_eq!(r.iter_usize().collect::<Vec<_>>(), [0,1,2]);
 
     let r = RefInt(&box_3);
-    r.iter_map(&dbl_plus_one);
+    r.iter_map(&dbl_usize);
+
+    let r = RefInt(&box_3);
+    r.iter_map_s(&dbl_ref);
 }
