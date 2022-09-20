@@ -1,5 +1,5 @@
 //a Imports
-use crate::{LexerError, PosnInStream};
+use crate::{LexerError, UserPosn};
 
 //a SimpleParseError
 //tp SimpleParseError
@@ -7,11 +7,11 @@ use crate::{LexerError, PosnInStream};
 ///
 /// An error in parsing a token
 ///
-/// P : PosnInStream
+/// P : UserPosn
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SimpleParseError<P>
 where
-    P: PosnInStream,
+    P: UserPosn,
 {
     /// The character which could not be matched to a token
     pub ch: char,
@@ -21,12 +21,12 @@ where
 }
 
 //ip Error for SimpleParseError
-impl<P> std::error::Error for SimpleParseError<P> where P: PosnInStream {}
+impl<P> std::error::Error for SimpleParseError<P> where P: UserPosn {}
 
 //ip LexerError for SimpleParseError
 impl<P> LexerError<P> for SimpleParseError<P>
 where
-    P: PosnInStream,
+    P: UserPosn,
 {
     fn failed_to_parse(pos: P, ch: char) -> Self {
         Self { ch, pos }
@@ -36,7 +36,7 @@ where
 //ip Display for SimpleParseError
 impl<P> std::fmt::Display for SimpleParseError<P>
 where
-    P: PosnInStream,
+    P: UserPosn,
 {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(fmt, "Failed to parse: unexpected char '{}' at ", self.ch)?;

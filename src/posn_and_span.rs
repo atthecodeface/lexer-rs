@@ -8,4 +8,4 @@ mod traits;
 pub use line_column::LineColumn;
 pub use stream_char_pos::StreamCharPos;
 pub use stream_char_span::StreamCharSpan;
-pub use traits::{PosnInCharStream, PosnInStream};
+pub use traits::{PosnInCharStream, UserPosn};

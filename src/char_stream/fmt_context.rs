@@ -1,5 +1,5 @@
 //a Imports
-use crate::PosnInStream;
+use crate::UserPosn;
 
 //a FmtContext
 //tt FmtContext
@@ -36,7 +36,7 @@ pub trait FmtContext<P> {
         num_cols: usize, // number of columns to highlight
     ) -> std::fmt::Result
     where
-        P: PosnInStream,
+        P: UserPosn,
     {
         let line = start.line();
         let first_col = start.column();
@@ -72,7 +72,7 @@ pub trait FmtContext<P> {
         end: &P,
     ) -> std::fmt::Result
     where
-        P: PosnInStream,
+        P: UserPosn,
     {
         let first_line = start.line();
         let first_line = if first_line > 1 {
@@ -130,7 +130,7 @@ pub trait FmtContext<P> {
     /// This is the main method used by clients of the trait
     fn fmt_context(&self, fmt: &mut dyn std::fmt::Write, start: &P, end: &P) -> std::fmt::Result
     where
-        P: PosnInStream,
+        P: UserPosn,
     {
         if start.line() == end.line() || (start.line() + 1 == end.line() && end.column() == 0) {
             let num_cols = {

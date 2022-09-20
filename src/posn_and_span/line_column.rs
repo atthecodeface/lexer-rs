@@ -1,11 +1,11 @@
 //a Imports
-use crate::PosnInStream;
+use crate::UserPosn;
 
 //a LineColumn
 //tp LineColumn
 /// A line and column within a text stream
 ///
-/// This provides the [PosnInStream] trait, which provides methods to
+/// This provides the [UserPosn] trait, which provides methods to
 /// retrieve the line and column values of the state.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub struct LineColumn {
@@ -27,8 +27,8 @@ impl std::fmt::Display for LineColumn {
     }
 }
 
-//ip PosnInStream for LineColumn
-impl PosnInStream for LineColumn {
+//ip UserPosn for LineColumn
+impl UserPosn for LineColumn {
     fn line(&self) -> usize {
         self.line
     }

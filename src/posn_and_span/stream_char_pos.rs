@@ -1,5 +1,5 @@
 //a Imports
-use crate::{PosnInCharStream, PosnInStream};
+use crate::{PosnInCharStream, UserPosn};
 
 //a StreamCharPos
 //tp StreamCharPos
@@ -9,7 +9,7 @@ use crate::{PosnInCharStream, PosnInStream};
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Hash)]
 pub struct StreamCharPos<P>
 where
-    P: PosnInStream,
+    P: UserPosn,
 {
     byte_ofs: usize,
     pos: P,
@@ -18,7 +18,7 @@ where
 //ip StreamCharPos
 impl<P> StreamCharPos<P>
 where
-    P: PosnInStream,
+    P: UserPosn,
 {
     /// Get the descriptive position that [Self] includes; if that
     /// type provides them accurately, this can give the line number
@@ -28,10 +28,10 @@ where
     }
 }
 
-//ip PosnInStream for StreamCharPos
-impl<P> PosnInStream for StreamCharPos<P>
+//ip UserPosn for StreamCharPos
+impl<P> UserPosn for StreamCharPos<P>
 where
-    P: PosnInStream,
+    P: UserPosn,
 {
     fn advance_cols(mut self, num_bytes: usize, num_chars: usize) -> Self {
         self.byte_ofs += num_bytes;
@@ -58,7 +58,7 @@ where
 //ip PosnInCharStream for StreamCharPos
 impl<P> PosnInCharStream for StreamCharPos<P>
 where
-    P: PosnInStream,
+    P: UserPosn,
 {
     fn byte_ofs(&self) -> usize {
         self.byte_ofs
@@ -68,7 +68,7 @@ where
 //ip Display for StreamCharPos
 impl<P> std::fmt::Display for StreamCharPos<P>
 where
-    P: PosnInStream,
+    P: UserPosn,
 {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         self.pos.error_fmt(fmt)

@@ -119,7 +119,7 @@ pub use char_stream::CharStream;
 pub use posn_and_span::LineColumn;
 pub use posn_and_span::StreamCharPos;
 pub use posn_and_span::StreamCharSpan;
-pub use posn_and_span::{PosnInCharStream, PosnInStream};
+pub use posn_and_span::{PosnInCharStream, UserPosn};
 
 pub use crate::lexer::LexerOfStr;
 pub use crate::lexer::LexerOfString;

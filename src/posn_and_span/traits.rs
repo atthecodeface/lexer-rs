@@ -1,5 +1,5 @@
 //a PosnIn traits
-//tt PosnInStream
+//tt UserPosn
 /// Trait for location within a stream
 ///
 /// This base trait is used to enable tracking the position of a token
@@ -11,7 +11,7 @@
 /// parsing a simple string in a test.
 ///
 /// For a single file implementation see [crate::LineColumn]
-pub trait PosnInStream:
+pub trait UserPosn:
     Sized + std::fmt::Debug + Copy + std::default::Default + PartialEq + Eq + std::hash::Hash
 {
     //fp advance_cols
@@ -62,8 +62,8 @@ pub trait PosnInStream:
     }
 }
 
-//ip PosnInStream for ()
-impl PosnInStream for () {}
+//ip UserPosn for ()
+impl UserPosn for () {}
 
 //tt PosnInCharStream
 /// Trait for location within a character stream
@@ -71,7 +71,7 @@ impl PosnInStream for () {}
 /// This tracks a byte offset within the stream so that strings can be
 /// retrieved from the stream. Byte offsets *must* always be on UTF8
 /// boundaries.
-pub trait PosnInCharStream: PosnInStream {
+pub trait PosnInCharStream: UserPosn {
     //mp byte_ofs
     /// Return the byte offset into the stream of the position.
     ///
@@ -79,8 +79,8 @@ pub trait PosnInCharStream: PosnInStream {
     fn byte_ofs(&self) -> usize;
 }
 
-//ip PosnInStream for usize
-impl PosnInStream for usize {
+//ip UserPosn for usize
+impl UserPosn for usize {
     fn advance_cols(self, byte_ofs: usize, _num_chars: usize) -> Self {
         self + byte_ofs
     }
