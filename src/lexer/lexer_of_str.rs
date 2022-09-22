@@ -2,7 +2,7 @@
 use std::marker::PhantomData;
 
 use crate::BoxDynLexerParseFn;
-use crate::{Lexer, LexerError, CharStream, LexerParseResult};
+use crate::{CharStream, Lexer, LexerError, LexerParseResult};
 use crate::{ParserIterator, PosnInCharStream, StreamCharSpan};
 
 //a LexerOfStr
@@ -44,7 +44,7 @@ use crate::{ParserIterator, PosnInCharStream, StreamCharSpan};
 /// The [LexerOfStr] also provides a [CharStream] implementation,
 /// which provides methods that are can be used by the parse functions.
 ///
-/// This provides methods to match strings, get 
+/// This provides methods to match strings, get
 ///
 // Cannot derive either Copy or Clone without that putting the same bound on T and E
 #[derive(Debug)]
@@ -242,7 +242,7 @@ where
         }
         state
     }
-    
+
     //mp do_while
     fn do_while<F: Fn(usize, char) -> bool>(
         &self,

@@ -82,7 +82,6 @@ pub trait LexerError<P>: Sized + std::error::Error {
 /// parser together, enabling simpler type inference and less
 /// turbofish syntax in clients of the lexical analysis.
 pub trait Lexer: std::fmt::Debug {
-
     /// The Token type is the type of the token to be returned by the
     /// Lexer; it is used as part of the result of the [Lexer] parse
     /// functions.

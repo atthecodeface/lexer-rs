@@ -20,7 +20,7 @@ use crate::UserPosn;
 /// with aa line number of up to 4 digits, and so on.
 pub trait FmtContext<P> {
     /// Return the length of the specified line
-    fn line_length(&self, line:usize) -> usize;
+    fn line_length(&self, line: usize) -> usize;
 
     /// Format the line of text (potentially with coloring and so on).
     ///

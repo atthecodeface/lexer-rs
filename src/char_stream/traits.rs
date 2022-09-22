@@ -64,32 +64,44 @@ pub trait CharStream<P> {
 
     //cp consumed_char
     /// Get a stream state after consuming the specified (non-newline) character at its current state
-    fn consumed_char(&self, state: P, ch: char) -> P where P : PosnInCharStream  {
-      if ch == '\n' {
-          state.advance_line(1)
-       } else {
-          state.advance_cols(ch.len_utf8(), 1)
-       }
-    }        
+    fn consumed_char(&self, state: P, ch: char) -> P
+    where
+        P: PosnInCharStream,
+    {
+        if ch == '\n' {
+            state.advance_line(1)
+        } else {
+            state.advance_cols(ch.len_utf8(), 1)
+        }
+    }
 
     //cp consumed_newline
     /// Get a stream state after consuming a newline at its current state
-    unsafe fn consumed_newline(&self, state: P, num_bytes: usize) -> P where P : PosnInCharStream {
-        state.advance_line(num_bytes)    
+    unsafe fn consumed_newline(&self, state: P, num_bytes: usize) -> P
+    where
+        P: PosnInCharStream,
+    {
+        state.advance_line(num_bytes)
     }
 
     //cp consumed_ascii_str
     /// Get a stream state after consuming the specified (non-newline) character at its current state
     /// Become the span after consuming a particular ascii string without newlines
-    unsafe fn consumed_ascii_str(&self, state: P, s: &str) -> P where P : PosnInCharStream {
+    unsafe fn consumed_ascii_str(&self, state: P, s: &str) -> P
+    where
+        P: PosnInCharStream,
+    {
         let n = s.len();
-        state.advance_cols( n, n)
+        state.advance_cols(n, n)
     }
 
     //cp consumed_chars
     /// Become the span after consuming a particular string of known character length
-    unsafe fn consumed_chars(&self, state: P, num_bytes: usize, num_chars: usize) -> P where P : PosnInCharStream {
-         state.advance_cols(num_bytes, num_chars)
+    unsafe fn consumed_chars(&self, state: P, num_bytes: usize, num_chars: usize) -> P
+    where
+        P: PosnInCharStream,
+    {
+        state.advance_cols(num_bytes, num_chars)
     }
 
     //mp commit_consumed
@@ -101,4 +113,3 @@ pub trait CharStream<P> {
     /// if this fits the application
     fn commit_consumed(&self, _up_to: &P) {}
 }
-
