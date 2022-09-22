@@ -1,10 +1,10 @@
 //a Imports
 use std::env;
 
-use lexer::LineColumn;
-use lexer::SimpleParseError;
-use lexer::StreamCharPos;
-use lexer::{CharStream, FmtContext, Lexer, LexerOfStr, LexerOfString, LexerParseResult};
+use lexer_rs::LineColumn;
+use lexer_rs::SimpleParseError;
+use lexer_rs::StreamCharPos;
+use lexer_rs::{CharStream, FmtContext, Lexer, LexerOfStr, LexerOfString, LexerParseResult};
 
 //a CalcOp
 //tp CalcOp

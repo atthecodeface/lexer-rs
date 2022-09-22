@@ -1,7 +1,16 @@
 [package]
-name = "lexer"
+name = "lexer-rs"
 version = "0.0.2"
 edition = "2021"
+readme = "README.md"
+authors = ["Gavin J Stark"]
+description = "Lexical anaylzer framework for context-free text parsing into tokens\n"
+homepage = "https://github.com/atthecodeface/lexer-rs"
+documentation = "https://docs.rs/lexer-rs"
+keywords = ["parsing", "parser", "lexical", "text"]
+categories = ["parsing"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/atthecodeface/lexer-rs"
 
 [dependencies]
 paste = "1.0"

@@ -1,8 +1,8 @@
 //a Imports
-use lexer::PosnInCharStream;
-use lexer::SimpleParseError;
-use lexer::{CharStream, FmtContext, Lexer, LexerOfStr, LexerOfString, LexerParseResult};
-use lexer::{LineColumn, StreamCharPos, StreamCharSpan};
+use lexer_rs::PosnInCharStream;
+use lexer_rs::SimpleParseError;
+use lexer_rs::{CharStream, FmtContext, Lexer, LexerOfStr, LexerOfString, LexerParseResult};
+use lexer_rs::{LineColumn, StreamCharPos, StreamCharSpan};
 
 //a SimpleToken
 //tp SimpleToken
@@ -165,23 +165,6 @@ where
     //zz All done
 }
 
-fn parse_value_fn<
-    L: CharStream<TextPos> + Lexer<State = TextPos, Token = LexToken, Error = LexError>,
->(
-    stream: &L,
-    state: TextPos,
-    ch: char,
-) -> LexerParseResult<TextPos, LexToken, LexError> {
-    let is_digit = |_, ch| ('0'..='9').contains(&ch);
-    let (state, opt_x) = stream.do_while(state, ch, &is_digit);
-    if let Some((start, _n)) = opt_x {
-        let span = StreamCharSpan::new(start, state);
-        Ok(Some((state, SimpleToken::Digits(span))))
-    } else {
-        Ok(None)
-    }
-}
-
 //a Main
 type TextPos = StreamCharPos<LineColumn>;
 type LexToken = SimpleToken<TextPos, ()>;
@@ -203,7 +186,7 @@ struct ParserVec<'a> {
 }
 impl<'a> ParserVec<'a> {
     pub fn new() -> Self {
-        let mut parsers = Vec::new();
+        let parsers = Vec::new();
         Self { parsers }
     }
     pub fn add_parser<F>(&mut self, f: F)
@@ -213,7 +196,6 @@ impl<'a> ParserVec<'a> {
     {
         self.parsers.push(Box::new(f));
     }
-    pub fn add(&mut self) {}
 }
 
 fn main() -> Result<(), String> {
