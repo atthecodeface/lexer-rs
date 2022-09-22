@@ -134,7 +134,7 @@ where
     ) -> LexerParseResult<Self::State, Self::Token, Self::Error> {
         if let Some(ch) = self.peek_at(&state) {
             for p in parsers {
-                let result = p(&self, state, ch)?;
+                let result = p(self, state, ch)?;
                 if result.is_some() {
                     return Ok(result);
                 }

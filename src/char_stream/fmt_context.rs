@@ -43,11 +43,11 @@ pub trait FmtContext<P> {
         if line > 1 {
             write!(f, "    |  ")?;
             self.fmt_line(f, line - 1)?;
-            write!(f, "\n")?;
+            writeln!(f)?;
         }
         write!(f, "{:4}|  ", line)?;
         self.fmt_line(f, line)?;
-        write!(f, "\n")?;
+        writeln!(f)?;
         write!(f, "    |  ")?;
         for _ in 1..(first_col) {
             f.write_char(' ')?;
@@ -59,9 +59,8 @@ pub trait FmtContext<P> {
                 f.write_char('^')?;
             }
         }
-        write!(f, "\n")?;
-        write!(f, "    |  ")?;
-        write!(f, "\n")
+        writeln!(f)?;
+        writeln!(f, "    |  ")
     }
 
     /// Format multiple lines of text, highlighting certain lines
@@ -109,7 +108,7 @@ pub trait FmtContext<P> {
             let l = first_line + i;
             if i >= start_skip && i <= end_skip {
                 if !ellipses_output {
-                    write!(f, "    |...\n")?;
+                    writeln!(f, "    |...")?;
                     ellipses_output = true;
                 }
                 continue;
@@ -120,7 +119,7 @@ pub trait FmtContext<P> {
                 write!(f, "    |  ")?;
             }
             self.fmt_line(f, l)?;
-            write!(f, "\n")?;
+            writeln!(f)?;
         }
         Ok(())
     }

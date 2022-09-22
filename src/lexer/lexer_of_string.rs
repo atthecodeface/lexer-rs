@@ -77,7 +77,7 @@ where
     /// Take the text as a [String] out of the [LexerOfString]
     pub fn take_text(&mut self) -> String {
         self.line_start_ncolumns.clear();
-        std::mem::replace(&mut self.text, String::new())
+        std::mem::take(&mut self.text)
     }
 
     //mp text
@@ -100,7 +100,7 @@ where
         let mut s: &str = &self.text;
         let mut pos = P::default();
         line_start_ncolumns.push((pos, 0)); // Line '0'
-        while let Some((line, next_line)) = s.split_once("\n") {
+        while let Some((line, next_line)) = s.split_once('\n') {
             let ncolumns = line.chars().count();
             line_start_ncolumns.push((pos, ncolumns));
             pos = pos.advance_line(line.len() + 1);
@@ -126,7 +126,7 @@ where
 
     fn fmt_line(&self, f: &mut dyn std::fmt::Write, line: usize) -> std::fmt::Result {
         let s = &self.text[self.line_start_ncolumns[line].0.byte_ofs()..];
-        let s = s.split_once("\n").map(|(s, _)| s).unwrap_or(s);
+        let s = s.split_once('\n').map(|(s, _)| s).unwrap_or(s);
         write!(f, "{}", s)
     }
 }

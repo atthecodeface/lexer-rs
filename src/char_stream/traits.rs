@@ -77,6 +77,12 @@ pub trait CharStream<P> {
 
     //cp consumed_newline
     /// Get a stream state after consuming a newline at its current state
+    ///
+    /// # Safety
+    ///
+    /// num_bytes *must* correspond to the number of bytes that the
+    /// newline character consists of, and state *must* point to the
+    /// bytes offset of that character
     unsafe fn consumed_newline(&self, state: P, num_bytes: usize) -> P
     where
         P: PosnInCharStream,
@@ -87,7 +93,14 @@ pub trait CharStream<P> {
     //cp consumed_ascii_str
     /// Get a stream state after consuming the specified (non-newline) character at its current state
     /// Become the span after consuming a particular ascii string without newlines
-    unsafe fn consumed_ascii_str(&self, state: P, s: &str) -> P
+    ///
+    /// This is safe as there is no unsafe handling of byte offsets
+    /// within *state*; however, there is no check that the provided
+    /// string is ASCII and that it does not contain newlines. If
+    /// these API rules are broke then the lie and column held by
+    /// *state* may be incorrect (which is not *unsafe*, but
+    /// potentially a bug)
+    fn consumed_ascii_str(&self, state: P, s: &str) -> P
     where
         P: PosnInCharStream,
     {
@@ -97,6 +110,14 @@ pub trait CharStream<P> {
 
     //cp consumed_chars
     /// Become the span after consuming a particular string of known character length
+    ///
+    /// # Safety
+    ///
+    /// num_bytes *must* correspond to the number of bytes that
+    /// 'num_chars' indicates start at *state*. If this constraint is
+    /// not met then the byte offset indicated by the returned value
+    /// may not correspond to a UTF8 character boundary within the
+    /// stream.
     unsafe fn consumed_chars(&self, state: P, num_bytes: usize, num_chars: usize) -> P
     where
         P: PosnInCharStream,
