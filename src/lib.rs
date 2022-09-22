@@ -58,8 +58,7 @@ to provide good error messages when things go wrong; it provides a
 trait that allows abstraction of the lexer from the consumer (so that
 one can get streams of tokens from a String, a BufRead, etc.); it
 provides the infrastructure for any lexer using a simple mechanism for
-parsing tokens; and it provides a [SimpleToken] and parsing functions
-enabling ver low overhead lexers for simple tasks.
+parsing tokens.
 
 # Positions in files
 

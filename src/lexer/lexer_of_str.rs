@@ -80,7 +80,7 @@ where
     E: LexerError<P>,
 {
     //fp new
-    /// Create a new [TextStream] by borrowing a [str]
+    /// Create a new [LexerOfStr] by borrowing a [str]
     pub fn new(text: &'a str) -> Self {
         let end = text.as_bytes().len();
         Self {
@@ -182,11 +182,11 @@ where
     }
 
     //mp get_text
-    /// Get the text between two [StreamCharPos] provided by a parser
+    /// Get the text between two [crate::StreamCharPos] provided by a parser
     ///
     /// # Safety
     ///
-    /// The [StreamCharPos] must have been provided by a parser and
+    /// The [crate::StreamCharPos] must have been provided by a parser and
     /// so the byte offsets are indeed utf8 character boundaries
     fn get_text(&self, start: P, end: P) -> &str {
         unsafe { self.text.get_unchecked(start.byte_ofs()..end.byte_ofs()) }

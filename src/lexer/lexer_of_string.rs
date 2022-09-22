@@ -4,22 +4,22 @@ use std::marker::PhantomData;
 use crate::{FmtContext, PosnInCharStream};
 use crate::{LexerError, LexerOfStr};
 
-//a LexerOfStrinng
+//a LexerOfString
 //tp LexerOfString
 /// This provides a type that wraps an allocated [String], and which
 /// tracks the lines within the string. It then provides a method to
 /// create a [LexerOfStr] that borrows the text, and which can the be
-/// used as a [Lexer].
+/// used as a [crate::Lexer].
 ///
 /// This type also implements the [FmtContext] trait, which allows for
 /// pretty-printing the text between certain lines, to highlight certain
 /// characters or regions of the text.
 ///
-/// Should the [Lexer] return an error while parsing, then the
+/// Should the [LexerOfStr] return an error while parsing then the
 /// [FmtContext] implementation can be used to generate a very useful
 /// error message with the context of the error.
 ///
-/// This also applies should the [Lexer] output be used in a further
+/// This also applies should the [LexerOfStr] output be used in a further
 /// grammar - the methods to pretty-print the text require just start
 /// and end positions of the position type, which must support
 /// [PosnInCharStream].
